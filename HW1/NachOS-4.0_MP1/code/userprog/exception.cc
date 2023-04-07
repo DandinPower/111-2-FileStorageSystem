@@ -74,6 +74,13 @@ ExceptionHandler(ExceptionType which)
 			SysHalt();
 			ASSERTNOTREACHED();
 			break;
+		case SC_PrintInt:
+			val = kernel->machine->ReadRegister(4);
+			SysPrintInt(val);
+	  		kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+	  		kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+	 		kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg)+4);
+			return;
 		case SC_Create:
 			val = kernel->machine->ReadRegister(4);
 			{

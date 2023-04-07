@@ -58,9 +58,6 @@ MSG:
 	j	$31
 	.end MSG
 
-	.globl Add
-	.ent	Add
-
 	.globl PrintInt
 	.ent   PrintInt
 PrintInt:

@@ -56,7 +56,7 @@ void Halt();
 
 /*
  * Show the int value on console
-*/
+ */
 void PrintInt(int value);
 
 /*
