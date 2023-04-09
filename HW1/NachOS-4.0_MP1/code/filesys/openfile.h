@@ -35,6 +35,10 @@ class OpenFile {
 	int GetFileDescriptor() {
 		return file;
 	}
+	int GetCurrentOffset() {
+		return currentOffset;
+	}
+
     int ReadAt(char *into, int numBytes, int position) { 
     		Lseek(file, position, 0); 
 		return ReadPartial(file, into, numBytes); 

@@ -19,6 +19,8 @@
 #include "filesys.h"
 #include "machine.h"
 
+typedef int OpenFileId;
+
 class PostOfficeInput;
 class PostOfficeOutput;
 class SynchConsoleInput;
@@ -46,7 +48,8 @@ class Kernel {
 	
   void PrintInt(int value);
 	int CreateFile(char* filename); // fileSystem call
-  int OpenAFile(char* filename);
+  OpenFileId OpenAFile(char* filename);
+  int WriteFile(char *buffer, int size, OpenFileId fd);
 
 // These are public for notational convenience; really, 
 // they're global variables used everywhere.

@@ -15,6 +15,8 @@
 
 #include "synchconsole.h"
 
+typedef int OpenFileId;
+
 void SysHalt()
 {
   kernel->interrupt->Halt();
@@ -38,9 +40,18 @@ int SysCreate(char *filename)
 	return kernel->interrupt->CreateFile(filename);
 }
 
-int SysOpen(char *filename)
+// -1: open fail
+// fd
+OpenFileId SysOpen(char *filename)
 {
 	return kernel->interrupt->OpenFile(filename);
+}
+
+// -1: write fail
+// size 
+int SysWrite(char *buffer, int size, OpenFileId fd)
+{
+	return kernel->interrupt->WriteFile(buffer, size, fd);
 }
 
 

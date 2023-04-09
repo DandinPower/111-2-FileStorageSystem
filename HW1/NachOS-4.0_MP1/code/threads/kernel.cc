@@ -316,9 +316,18 @@ int Kernel::CreateFile(char *filename)
 	return fileSystem->Create(filename);
 }
 
-int Kernel::OpenAFile(char* filename)
+OpenFileId Kernel::OpenAFile(char* filename)
 {
     OpenFile* file = fileSystem->Open(filename);
     if (!file) return -1;
-    return file->GetFileDescriptor();
+    OpenFileId fd = file->GetFileDescriptor();
+    fileSystem->fileDescriptorTable[fd] = file;
+    return fd;
+}
+
+int Kernel::WriteFile(char *buffer, int size, OpenFileId fd)
+{
+    OpenFile * file = fileSystem->fileDescriptorTable[fd];
+    if (!file) return -1;
+    return file->Write(buffer, size);
 }

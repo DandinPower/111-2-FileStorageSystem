@@ -251,10 +251,16 @@ Interrupt::CreateFile(char *filename)
     return kernel->CreateFile(filename);
 }
 
-int
+OpenFileId
 Interrupt::OpenFile(char *filename)
 {
     return kernel->OpenAFile(filename);
+}
+
+int 
+Interrupt::WriteFile(char *buffer, int size, OpenFileId fd)
+{
+    return kernel->WriteFile(buffer, size, fd);
 }
 
 
