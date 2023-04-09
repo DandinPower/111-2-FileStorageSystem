@@ -318,6 +318,7 @@ int Kernel::CreateFile(char *filename)
 
 int Kernel::OpenAFile(char* filename)
 {
-    OpenFile* test = fileSystem->Open(filename);
-    return test->GetFileDescriptor();
+    OpenFile* file = fileSystem->Open(filename);
+    if (!file) return -1;
+    return file->GetFileDescriptor();
 }
