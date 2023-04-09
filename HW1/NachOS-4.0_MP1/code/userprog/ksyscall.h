@@ -61,5 +61,11 @@ int SysClose(OpenFileId fd)
 	return kernel->interrupt->CloseFile(fd);
 }
 
+// -1: read fail
+// size
+int SysRead(char *buffer, int size, OpenFileId fd)
+{
+	return kernel->interrupt->ReadFile(buffer, size, fd);
+}
 
 #endif /* ! __USERPROG_KSYSCALL_H__ */

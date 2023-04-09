@@ -339,3 +339,10 @@ int Kernel::CloseFile(OpenFileId fd){
     fileSystem->fileDescriptorTable[fd] = NULL;
     return 1;
 }
+
+int Kernel::ReadFile(char *buffer, int size, OpenFileId fd)
+{
+    OpenFile * file = fileSystem->fileDescriptorTable[fd];
+    if (!file) return -1;
+    return file->Read(buffer, size);
+}

@@ -269,6 +269,12 @@ Interrupt::CloseFile(OpenFileId fd)
     return kernel->CloseFile(fd);
 }
 
+int 
+Interrupt::ReadFile(char *buffer, int size, OpenFileId fd)
+{
+    return kernel->ReadFile(buffer, size, fd);
+}
+
 
 //----------------------------------------------------------------------
 // Interrupt::Schedule

@@ -137,6 +137,22 @@ ExceptionHandler(ExceptionType which)
 			return;
 			ASSERTNOTREACHED();
             break;
+		case SC_Read:
+			val = kernel->machine->ReadRegister(4);
+			size = kernel->machine->ReadRegister(5);
+			fd = kernel->machine->ReadRegister(6);
+			{
+				char *buffer = &(kernel->machine->mainMemory[val]);
+				size = SysRead(buffer, size, fd);
+				kernel->machine->WriteRegister(2, (int) size);
+			}
+			kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+			kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+			kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg)+4);
+			return;
+			ASSERTNOTREACHED();
+            break;
+
       	case SC_Add:
 			DEBUG(dbgSys, "Add " << kernel->machine->ReadRegister(4) << " + " << kernel->machine->ReadRegister(5) << "\n");
 			/* Process SysAdd Systemcall*/
