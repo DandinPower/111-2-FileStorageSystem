@@ -244,7 +244,6 @@ Interrupt::PrintInt(int value){
     kernel->PrintInt(value);
 }
 
-
 int
 Interrupt::CreateFile(char *filename)
 {

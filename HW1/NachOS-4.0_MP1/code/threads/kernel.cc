@@ -309,8 +309,6 @@ void Kernel::PrintInt(int value)
     synchConsoleOut->PutInt(value);
 }
 
-
-
 int Kernel::CreateFile(char *filename)
 {
 	return fileSystem->Create(filename);
