@@ -263,6 +263,12 @@ Interrupt::WriteFile(char *buffer, int size, OpenFileId fd)
     return kernel->WriteFile(buffer, size, fd);
 }
 
+int 
+Interrupt::CloseFile(OpenFileId fd)
+{
+    return kernel->CloseFile(fd);
+}
+
 
 //----------------------------------------------------------------------
 // Interrupt::Schedule

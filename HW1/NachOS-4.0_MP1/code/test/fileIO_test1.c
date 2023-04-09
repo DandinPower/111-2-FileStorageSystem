@@ -14,8 +14,8 @@ int main(void)
 		int count = Write(test + i, 1, fid);
 		if (count != 1) MSG("Failed on writing file");
 	}
-	// success = Close(fid);
-	// if (success != 1) MSG("Failed on closing file");
+	success = Close(fid);
+	if (success != 1) MSG("Failed on closing file");
 	Halt();
 }
 

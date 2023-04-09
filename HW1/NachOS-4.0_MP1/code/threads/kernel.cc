@@ -331,3 +331,11 @@ int Kernel::WriteFile(char *buffer, int size, OpenFileId fd)
     if (!file) return -1;
     return file->Write(buffer, size);
 }
+
+int Kernel::CloseFile(OpenFileId fd){
+    OpenFile * file = fileSystem->fileDescriptorTable[fd];
+    if (!file) return -1;
+    delete file;
+    fileSystem->fileDescriptorTable[fd] = NULL;
+    return 1;
+}

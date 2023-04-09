@@ -54,5 +54,12 @@ int SysWrite(char *buffer, int size, OpenFileId fd)
 	return kernel->interrupt->WriteFile(buffer, size, fd);
 }
 
+// 1: close success
+// -1: close fail
+int SysClose(OpenFileId fd)
+{
+	return kernel->interrupt->CloseFile(fd);
+}
+
 
 #endif /* ! __USERPROG_KSYSCALL_H__ */
