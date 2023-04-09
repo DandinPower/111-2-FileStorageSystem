@@ -77,7 +77,7 @@ class FileSystem {
 
 	int CloseFile(OpenFileId fd){
 		OpenFile * file = fileDescriptorTable[fd];
-		if (!file) return -1;
+		if (!file) return 0;
 		delete file;
 		fileDescriptorTable[fd] = NULL;
 		return 1;

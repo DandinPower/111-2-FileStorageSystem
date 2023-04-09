@@ -55,7 +55,7 @@ int SysWrite(char *buffer, int size, OpenFileId fd)
 }
 
 // 1: close success
-// -1: close fail
+// 0: close fail
 int SysClose(OpenFileId fd)
 {
 	return kernel->interrupt->CloseFile(fd);
