@@ -318,31 +318,19 @@ int Kernel::CreateFile(char *filename)
 
 OpenFileId Kernel::OpenAFile(char* filename)
 {
-    OpenFile* file = fileSystem->Open(filename);
-    if (!file) return -1;
-    OpenFileId fd = file->GetFileDescriptor();
-    fileSystem->fileDescriptorTable[fd] = file;
-    return fd;
+    return fileSystem->OpenAFile(filename);
 }
 
 int Kernel::WriteFile(char *buffer, int size, OpenFileId fd)
 {
-    OpenFile * file = fileSystem->fileDescriptorTable[fd];
-    if (!file) return -1;
-    return file->Write(buffer, size);
+    return fileSystem->WriteFile(buffer, size, fd);
 }
 
 int Kernel::CloseFile(OpenFileId fd){
-    OpenFile * file = fileSystem->fileDescriptorTable[fd];
-    if (!file) return -1;
-    delete file;
-    fileSystem->fileDescriptorTable[fd] = NULL;
-    return 1;
+    return fileSystem->CloseFile(fd);
 }
 
 int Kernel::ReadFile(char *buffer, int size, OpenFileId fd)
 {
-    OpenFile * file = fileSystem->fileDescriptorTable[fd];
-    if (!file) return -1;
-    return file->Read(buffer, size);
+    return fileSystem->ReadFile(buffer, size, fd);
 }
