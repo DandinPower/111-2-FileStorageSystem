@@ -172,3 +172,20 @@ ConsoleOutput::PutChar(char ch)
     kernel->interrupt->Schedule(this, ConsoleTime, ConsoleWriteInt);
 }
 
+//----------------------------------------------------------------------
+// ConsoleOutput::PutInt()
+// 	Write a int to the simulated display, schedule an interrupt 
+//	to occur in the future, and return.
+//----------------------------------------------------------------------
+
+void
+ConsoleOutput::PutInt(int value)
+{
+    ASSERT(putBusy == FALSE);
+    char * printStr = (char*)malloc(sizeof(char) * 15);
+    sprintf(printStr, "%d\n", value);
+    WriteFile(writeFileNo, printStr, strlen(printStr) * sizeof(char));
+    putBusy = TRUE;
+    kernel->interrupt->Schedule(this, ConsoleTime, ConsoleWriteInt);
+}
+

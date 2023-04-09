@@ -24,9 +24,7 @@ void SysHalt()
 
 void SysPrintInt(int value)
 {
-	char str[100]; 
-    sprintf(str, "%d\n", value);
-	for (int i=0; i<strlen(str); i++) output->PutChar(str[i]);
+	output->PutInt(value);
 }
 
 int SysAdd(int op1, int op2)
