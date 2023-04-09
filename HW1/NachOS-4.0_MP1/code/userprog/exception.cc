@@ -54,6 +54,7 @@ ExceptionHandler(ExceptionType which)
     int type = kernel->machine->ReadRegister(2);
 	int val;
     int status, exit, threadID, programID;
+	int fd;
 	DEBUG(dbgSys, "Received Exception " << which << " type: " << type << "\n");
     switch (which) {
     case SyscallException:
@@ -88,6 +89,20 @@ ExceptionHandler(ExceptionType which)
 			//cout << filename << endl;
 			status = SysCreate(filename);
 			kernel->machine->WriteRegister(2, (int) status);
+			}
+			kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+			kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+			kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg)+4);
+			return;
+			ASSERTNOTREACHED();
+            break;
+		case SC_Open:
+			val = kernel->machine->ReadRegister(4);
+			{
+				char *filename = &(kernel->machine->mainMemory[val]);
+				//cout << filename << endl;
+				fd = SysOpen(filename);
+				kernel->machine->WriteRegister(2, (int) fd);
 			}
 			kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
 			kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);

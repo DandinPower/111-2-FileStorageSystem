@@ -17,6 +17,7 @@
 #include "synchdisk.h"
 #include "post.h"
 #include "synchconsole.h"
+#include "openfile.h"
 
 //----------------------------------------------------------------------
 // Kernel::Kernel
@@ -303,9 +304,20 @@ int Kernel::Exec(char* name)
 //  cout << "after ThreadedKernel:Run();" << endl;  // unreachable
 }
 
+void Kernel::PrintInt(int value)
+{
+    synchConsoleOut->PutInt(value);
+}
+
+
+
 int Kernel::CreateFile(char *filename)
 {
 	return fileSystem->Create(filename);
 }
 
-
+int Kernel::OpenAFile(char* filename)
+{
+    OpenFile* test = fileSystem->Open(filename);
+    return test->GetFileDescriptor();
+}

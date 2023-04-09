@@ -15,8 +15,6 @@
 
 #include "synchconsole.h"
 
-SynchConsoleOutput *output = new SynchConsoleOutput(NULL);
-
 void SysHalt()
 {
   kernel->interrupt->Halt();
@@ -24,7 +22,7 @@ void SysHalt()
 
 void SysPrintInt(int value)
 {
-	output->PutInt(value);
+	kernel->interrupt->PrintInt(value);
 }
 
 int SysAdd(int op1, int op2)
@@ -38,6 +36,11 @@ int SysCreate(char *filename)
 	// 1: success
 	// 0: failed
 	return kernel->interrupt->CreateFile(filename);
+}
+
+int SysOpen(char *filename)
+{
+	return kernel->interrupt->OpenFile(filename);
 }
 
 
