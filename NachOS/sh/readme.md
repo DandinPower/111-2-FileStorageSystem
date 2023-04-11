@@ -33,6 +33,7 @@
 4. 解壓縮交叉編譯工具
     
     ```bash
+    cd NachOS-4.0_MP1
     sudo mv mips-decstation.linux-xgcc.gz /
     cd /
     sudo tar -zxvf mips-decstation.linux-xgcc.gz
