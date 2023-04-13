@@ -36,6 +36,7 @@
 #include "copyright.h"
 #include "list.h"
 #include "callback.h"
+#include "filesys.h"
 
 typedef int OpenFileId;
 

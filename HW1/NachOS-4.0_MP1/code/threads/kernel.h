@@ -48,10 +48,6 @@ class Kernel {
 	
   void PrintInt(int value);
 	int CreateFile(char* filename); // fileSystem call
-  OpenFileId OpenAFile(char* filename);
-  int WriteFile(char *buffer, int size, OpenFileId fd);
-  int CloseFile(OpenFileId fd);
-  int ReadFile(char *buffer, int size, OpenFileId fd);
 
 // These are public for notational convenience; really, 
 // they're global variables used everywhere.

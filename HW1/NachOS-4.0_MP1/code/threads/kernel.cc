@@ -313,22 +313,3 @@ int Kernel::CreateFile(char *filename)
 {
 	return fileSystem->Create(filename);
 }
-
-OpenFileId Kernel::OpenAFile(char* filename)
-{
-    return fileSystem->OpenAFile(filename);
-}
-
-int Kernel::WriteFile(char *buffer, int size, OpenFileId fd)
-{
-    return fileSystem->WriteFile(buffer, size, fd);
-}
-
-int Kernel::CloseFile(OpenFileId fd){
-    return fileSystem->CloseFile(fd);
-}
-
-int Kernel::ReadFile(char *buffer, int size, OpenFileId fd)
-{
-    return fileSystem->ReadFile(buffer, size, fd);
-}

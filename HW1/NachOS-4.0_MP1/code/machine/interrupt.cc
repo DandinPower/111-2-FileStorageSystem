@@ -253,25 +253,25 @@ Interrupt::CreateFile(char *filename)
 OpenFileId
 Interrupt::OpenFile(char *filename)
 {
-    return kernel->OpenAFile(filename);
+    return kernel->fileSystem->OpenAFile(filename);
 }
 
 int 
 Interrupt::WriteFile(char *buffer, int size, OpenFileId fd)
 {
-    return kernel->WriteFile(buffer, size, fd);
+    return kernel->fileSystem->WriteFile(buffer, size, fd);
 }
 
 int 
 Interrupt::CloseFile(OpenFileId fd)
 {
-    return kernel->CloseFile(fd);
+    return kernel->fileSystem->CloseFile(fd);
 }
 
 int 
 Interrupt::ReadFile(char *buffer, int size, OpenFileId fd)
 {
-    return kernel->ReadFile(buffer, size, fd);
+    return kernel->fileSystem->ReadFile(buffer, size, fd);
 }
 
 
