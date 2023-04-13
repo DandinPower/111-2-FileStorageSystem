@@ -33,13 +33,14 @@
 4. 解壓縮交叉編譯工具
     
     ```bash
-    sudo mv mips-decstation.linux-xgcc /
+    cd NachOS-4.0_MP1
+    sudo mv mips-decstation.linux-xgcc.gz /
     cd /
-    sudo tar -zxvf mips-decstation.linux-xgcc
+    sudo tar -zxvf mips-decstation.linux-xgcc.gz
     ```
     
 5. 修改MakeFile來使用32位元編譯
-    1. 在/code/build.linux/Makefile
+    1. /code/build.linux/Makefile
         
         ```makefile
             CPP=/lib/cpp
@@ -52,7 +53,7 @@
 6. 編譯
     
     ```bash
-    #切至code/build.linux資料夾
+    #確保在/code/build.linux/
     make depend
     make
     ```
@@ -60,7 +61,7 @@
 7. 測試
     
     ```bash
-    ./nachos –e ../test/halt
+    ./nachos -e ../test/halt
     ```
     
 # 參考資料
