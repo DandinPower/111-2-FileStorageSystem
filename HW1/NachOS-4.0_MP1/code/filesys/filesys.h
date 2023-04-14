@@ -41,6 +41,8 @@
 				// calls to UNIX, until the real file system
 				// implementation is available
 
+#define FS_OPENFILE_NUMS 20
+
 typedef int OpenFileId;
 
 class FileSystem {
@@ -56,43 +58,69 @@ class FileSystem {
 
     OpenFile* Open(char *name) {
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
-
 	  if (fileDescriptor == -1) return NULL;
 	  return new OpenFile(fileDescriptor);
       }
 	
 	OpenFileId OpenAFile(char *name){
+		// 檢查開檔
 		OpenFile* file = Open(name);
-		if (!file) return -1;
+		if (!file) {
+			return -1;
+		}
+		// 檢查並找出空的位置來放OpenFile, 後續如有需要可運用倍增法來實現超出長度的情況; 效率的部分可以透過維護一個freeIndexSet來加速查找freeIndex的時間
+		int freeIndex = NULL;
+		for (int i=0; i < FS_OPENFILE_NUMS; i++) {
+			if (!fileDescriptorTable[i]) {
+				freeIndex = i;
+			}
+		}
+		if (!freeIndex) {
+			return -1;
+		}
 		OpenFileId fd = file->GetFileDescriptor();
-		fileDescriptorTable[fd] = file;
+		fileDescriptorTable[freeIndex] = file;
 		return fd;
 	}
 
+	// Linear search找到對應的OpenFile來Write -> 後續可用HashTable等辦法來優化
 	int WriteFile(char *buffer, int size, OpenFileId fd){
-		OpenFile * file = fileDescriptorTable[fd];
-		if (!file) return -1;
-		return file->Write(buffer, size);
+		for (int i=0; i < FS_OPENFILE_NUMS; i++) {
+			if (!fileDescriptorTable[i]) continue;
+			if (fileDescriptorTable[i]->GetFileDescriptor() == fd) {
+				return fileDescriptorTable[i]->Write(buffer, size);
+			}
+		}
+		return -1;
 	}
 
-	int CloseFile(OpenFileId fd){
-		OpenFile * file = fileDescriptorTable[fd];
-		if (!file) return 0;
-		delete file;
-		fileDescriptorTable[fd] = NULL;
-		return 1;
-	}
-
+	// Linear search找到對應的OpenFile來Read -> 後續可用HashTable等辦法來優化
 	int ReadFile(char *buffer, int size, OpenFileId fd){
-		OpenFile * file = fileDescriptorTable[fd];
-		if (!file) return -1;
-		return file->Read(buffer, size);
+		for (int i=0; i < FS_OPENFILE_NUMS; i++) {
+			if (!fileDescriptorTable[i]) continue;
+			if (fileDescriptorTable[i]->GetFileDescriptor() == fd) {
+				return fileDescriptorTable[i]->Read(buffer, size);
+			}
+		}
+		return -1;
 	}
 
+	// Linear search找到對應的OpenFile來Close -> 後續可用HashTable等辦法來優化
+	int CloseFile(OpenFileId fd){
+		for (int i=0; i < FS_OPENFILE_NUMS; i++) {
+			if (!fileDescriptorTable[i]) continue;
+			if (fileDescriptorTable[i]->GetFileDescriptor() == fd) {
+				delete fileDescriptorTable[i];
+				fileDescriptorTable[i] = NULL;
+				return 1;
+			}
+		}
+		return 0;
+	}
 
     bool Remove(char *name) { return Unlink(name) == 0; }
 
-	OpenFile *fileDescriptorTable[20];
+	OpenFile *fileDescriptorTable[FS_OPENFILE_NUMS];
 	
 };
 
