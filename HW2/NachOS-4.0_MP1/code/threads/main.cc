@@ -179,6 +179,7 @@ main(int argc, char **argv)
     char *removeFileName = NULL;
     bool dirListFlag = false;
     bool dumpFlag = false;
+    bool formatFlag = false;
 #endif //FILESYS_STUB
 
     // some command line arguments are handled here.
@@ -192,6 +193,9 @@ main(int argc, char **argv)
 	}
 	else if (strcmp(argv[i], "-z") == 0) {
             cout << copyright << "\n";
+	}
+    else if (strcmp(argv[i], "-f") == 0) {
+        formatFlag = true;
 	}
 	else if (strcmp(argv[i], "-x") == 0) {
 	    ASSERT(i + 1 < argc);
@@ -271,15 +275,21 @@ main(int argc, char **argv)
     }
     if (copyUnixFileName != NULL && copyNachosFileName != NULL) {
       Copy(copyUnixFileName,copyNachosFileName);
+      kernel->interrupt->Halt();
     }
     if (dumpFlag) {
       kernel->fileSystem->Print();
     }
     if (dirListFlag) {
       kernel->fileSystem->List();
+      kernel->interrupt->Halt();
     }
     if (printFileName != NULL) {
       Print(printFileName);
+      kernel->interrupt->Halt();
+    }
+    if (formatFlag) {
+        kernel->interrupt->Halt();
     }
 #endif // FILESYS_STUB
 

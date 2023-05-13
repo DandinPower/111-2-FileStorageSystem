@@ -20,7 +20,7 @@
 // #define NumSingleDirect 8
 // #define NumDirect 	((SectorSize - (2 + 8) * sizeof(int)) / sizeof(int))
 // #define MaxFileSize 	(NumDirect * SectorSize) + (NumSingleDirect * (SectorSize / sizeof(int)) * SectorSize)
-#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int)) -1
+#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
