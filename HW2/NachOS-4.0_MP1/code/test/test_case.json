@@ -1,0 +1,17 @@
+[
+    {
+        "case_name": "HW04_File_test1",
+        "command": "./FS_HW04_a.sh",
+        "isfile": true,
+        "answer": "HW04_File_test1.txt",
+        "score": 25
+    },
+    {
+        "case_name": "HW04_File_test2",
+        "command": "./FS_HW04_b.sh",
+        "isfile": true,
+        "answer": "HW04_File_test2.txt",
+        "score": 25
+    }
+]
+

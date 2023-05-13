@@ -1,0 +1,6 @@
+FreeMapFileSize : 65536
+DirectoryFileSize : 1540
+/FS_test1
+abcdefghijklmnopqrstuvwxyz
+/FS_test2
+Passed! ^_^
