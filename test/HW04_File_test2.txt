@@ -1,0 +1,66 @@
+FreeMapFileSize : 65536
+DirectoryFileSize : 1540
+/t20000/t20004/FS_test4
+=========== Print File3 ============
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+=========== Recursive List ============
+[0] t20000 D 
+[1] t30000 D 
+[2] t40000 D 
+[3] t50000 D 
+[4] t60000 D 
+[5] t70000 D 
+=======================================
+Dir t20000
+[0] t20001 D 
+[1] t20002 D 
+[2] t20003 D 
+[3] t20004 D 
+[4] num_1000 F 
+=======================================
+Dir t20001
+Empty
+=======================================
+Dir t20002
+Empty
+=======================================
+Dir t20003
+Empty
+=======================================
+Dir t20004
+[0] FS_test4 F 
+[1] file3 F 
+=======================================
+Dir t30000
+[0] num_12000 F 
+=======================================
+Dir t40000
+Empty
+=======================================
+Dir t50000
+Empty
+=======================================
+Dir t60000
+Empty
+=======================================
+Dir t70000
+Empty

@@ -1,0 +1,4 @@
+FreeMapFileSize : 65536
+DirectoryFileSize : 1540
+=========================================
+[0] 100_m F 
