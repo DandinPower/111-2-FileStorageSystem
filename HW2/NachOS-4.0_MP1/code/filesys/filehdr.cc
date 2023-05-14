@@ -43,16 +43,39 @@
 bool
 FileHeader::Allocate(PersistentBitmap *freeMap, int fileSize)
 { 
+    const int maximumDirectSectors = NumDirect;
+    const int maximumIndirectSectors = NumPointerInSector;
+
     numBytes = fileSize;
     numSectors  = divRoundUp(fileSize, SectorSize);
     if (freeMap->NumClear() < numSectors){
 	    return FALSE;		// not enough space
     }
-    for (int i = 0; i < numSectors; i++) {
-	dataSectors[i] = freeMap->FindAndSet();
-	// since we checked that there was enough free space,
-	// we expect this to succeed
-	ASSERT(dataSectors[i] >= 0);
+    
+    int directSectors = min(maximumDirectSectors, numSectors);
+    for (int i = 0; i < directSectors; i++) {
+        dataSectors[i] = freeMap->FindAndSet();
+        // since we checked that there was enough free space,
+        // we expect this to succeed
+        ASSERT(dataSectors[i] >= 0);
+    }
+    // need indirect pointer
+    if (numSectors > maximumDirectSectors) {
+        int numSectorsIndirect = numSectors - directSectors; 
+        numIndirect =  numSectorsIndirect / maximumIndirectSectors;
+        
+        if (numSectorsIndirect % maximumIndirectSectors != 0) numIndirect += 1;
+        
+        table = new SingleIndirectPointer[numIndirect];
+        
+        for (int i = 0; i < numIndirect; i++) {
+            int allocateSectors = min(maximumIndirectSectors, numSectorsIndirect);
+            table->Allocate(freeMap, allocateSectors);
+            if (numSectorsIndirect - maximumIndirectSectors > 0)  numSectorsIndirect -= maximumIndirectSectors;
+        }
+    }
+    else {
+        numIndirect = 0;
     }
     return TRUE;
 }
@@ -83,7 +106,14 @@ FileHeader::Deallocate(PersistentBitmap *freeMap)
 void
 FileHeader::FetchFrom(int sector)
 {
-    kernel->synchDisk->ReadSector(sector, (char *)this);
+    int cacheArraySize = SectorSize / sizeof(int);
+    int cache[cacheArraySize];
+    kernel->synchDisk->ReadSector(sector, (char*)cache);
+    numBytes = cache[0];
+    numSectors = cache[1];
+    for (int i=0; i < NumDirect; i++){
+        dataSectors[i] = cache[2+i];
+    }
 }
 
 //----------------------------------------------------------------------
@@ -96,7 +126,15 @@ FileHeader::FetchFrom(int sector)
 void
 FileHeader::WriteBack(int sector)
 {
-    kernel->synchDisk->WriteSector(sector, (char *)this); 
+    int cacheArraySize = SectorSize / sizeof(int);
+    int cache[cacheArraySize];
+    cache[0] = numBytes;
+    cache[1] = numSectors;
+    for (int i=0; i < NumDirect; i++){
+        cache[2+i] = dataSectors[i];
+    }
+
+    kernel->synchDisk->WriteSector(sector, (char*)cache); 
 }
 
 //----------------------------------------------------------------------

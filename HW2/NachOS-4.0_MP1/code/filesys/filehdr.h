@@ -1,12 +1,12 @@
-// filehdr.h 
-//	Data structures for managing a disk file header.  
+// filehdr.h
+//	Data structures for managing a disk file header.
 //
 //	A file header describes where on disk to find the data in a file,
 //	along with other information about the file (for instance, its
 //	length, owner, etc.)
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -17,16 +17,16 @@
 #include "disk.h"
 #include "pbitmap.h"
 
-// #define NumSingleDirect 8
-// #define NumDirect 	((SectorSize - (2 + 8) * sizeof(int)) / sizeof(int))
-// #define MaxFileSize 	(NumDirect * SectorSize) + (NumSingleDirect * (SectorSize / sizeof(int)) * SectorSize)
-#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
-#define MaxFileSize 	(NumDirect * SectorSize)
+#define NumPointerInSector (SectorSize / sizeof(int))
+#define SingleIndirectSize (SectorSize * NumPointerInSector)
+#define NumSingleIndirect 8
+#define NumDirect (NumPointerInSector - NumSingleIndirect - 3)
+#define MaxFileSize ((NumDirect * SectorSize) + (NumSingleIndirect * SingleIndirectSize))
 
-// The following class defines the Nachos "file header" (in UNIX terms,  
+// The following class defines the Nachos "file header" (in UNIX terms,
 // the "i-node"), describing where on disk to find all of the data in the file.
 // The file header is organized as a simple table of pointers to
-// data blocks. 
+// data blocks.
 //
 // The file header data structure can be stored in memory or on disk.
 // When it is on disk, it is stored in a single sector -- this means
@@ -38,40 +38,48 @@
 // by allocating blocks for the file (if it is a new file), or by
 // reading it from disk.
 
-// class SingleIndirectPointer {
-//   public:
-//   private:
-//     int dataSectors[SectorSize / sizeof(int)];
-// };
+class SingleIndirectPointer {
+   public:
+    bool Allocate(PersistentBitmap *bitMap, int numSectors);
+    void Deallocate(PersistentBitmap *bitMap);
+    void FetchFrom(int sectorNumber);
+    void WriteBack(int sectorNumber);
+    int FileLength();
 
-class FileHeader {
-  public:
-    bool Allocate(PersistentBitmap *bitMap, int fileSize);// Initialize a file header, 
-						//  including allocating space 
-						//  on disk for the file data
-    void Deallocate(PersistentBitmap *bitMap);  // De-allocate this file's 
-						//  data blocks
-
-    void FetchFrom(int sectorNumber); 	// Initialize file header from disk
-    void WriteBack(int sectorNumber); 	// Write modifications to file header
-					//  back to disk
-
-    int ByteToSector(int offset);	// Convert a byte offset into the file
-					// to the disk sector containing
-					// the byte
-
-    int FileLength();			// Return the length of the file 
-					// in bytes
-
-    void Print();			// Print the contents of the file.
-
-  private:
-    int numBytes;			// Number of bytes in the file
-    int numSectors;			// Number of data sectors in the file
-    int dataSectors[NumDirect];		// Disk sector numbers for each data 
-    // int singleIndirectDataSectors[NumSingleDirect];   //Indirect pointer numbers for each data
-		// 			// block in the file
-    // SingleIndirectPointer *table;
+   private:
+    int numSectors;  // Number of data sectors;
+    int dataSectors[NumDirect];
 };
 
-#endif // FILEHDR_H
+class FileHeader {
+   public:
+    bool Allocate(PersistentBitmap *bitMap, int fileSize);  // Initialize a file header,
+                                                            //  including allocating space
+                                                            //  on disk for the file data
+    void Deallocate(PersistentBitmap *bitMap);              // De-allocate this file's
+                                                            //  data blocks
+
+    void FetchFrom(int sectorNumber);  // Initialize file header from disk
+    void WriteBack(int sectorNumber);  // Write modifications to file header
+                                       //  back to disk
+
+    int ByteToSector(int offset);  // Convert a byte offset into the file
+                                   // to the disk sector containing
+                                   // the byte
+
+    int FileLength();  // Return the length of the file
+                       // in bytes
+
+    void Print();  // Print the contents of the file.
+
+   private:
+    int numBytes;                // Number of bytes in the file
+    int numSectors;              // Number of data sectors in the file
+    int dataSectors[NumDirect];  // Disk sector numbers for each data
+    // int singleIndirectDataSectors[NumSingleDirect];   //Indirect pointer numbers for each data
+    // 			// block in the file
+    int numIndirect;  // Number of indirect pointer in file
+    SingleIndirectPointer *table;
+};
+
+#endif  // FILEHDR_H
