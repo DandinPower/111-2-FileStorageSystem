@@ -233,9 +233,9 @@ Interrupt::Idle()
 void
 Interrupt::Halt()
 {
-    cout << "Machine halting!\n\n";
-    cout << "This is halt\n";
-    kernel->stats->Print();
+    // cout << "Machine halting!\n\n";
+    // cout << "This is halt\n";
+    // kernel->stats->Print();
     delete kernel;	// Never returns.
 }
 
