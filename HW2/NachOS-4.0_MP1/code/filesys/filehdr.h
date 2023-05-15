@@ -18,10 +18,13 @@
 #include "pbitmap.h"
 
 #define NumPointerInSector (SectorSize / sizeof(int))
-#define SingleIndirectSize (SectorSize * NumPointerInSector)
+#define SingleIndirectSize (SectorSize * (NumPointerInSector - 1))
 #define NumSingleIndirect 8
 #define NumDirect (NumPointerInSector - NumSingleIndirect - 3)
 #define MaxFileSize ((NumDirect * SectorSize) + (NumSingleIndirect * SingleIndirectSize))
+
+const int maximumDirectSectors = NumDirect;
+const int maximumIndirectSectors = NumPointerInSector - 1;
 
 // The following class defines the Nachos "file header" (in UNIX terms,
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -44,18 +47,23 @@ class SingleIndirectPointer {
     void Deallocate(PersistentBitmap *bitMap);
     void FetchFrom(int sectorNumber);
     void WriteBack(int sectorNumber);
-    int FileLength();
 
    private:
     int numSectors;  // Number of data sectors;
-    int dataSectors[NumDirect];
+    int dataSectors[maximumIndirectSectors];
 };
 
 class FileHeader {
    public:
+
+    ~FileHeader();  // Destructor
+
     bool Allocate(PersistentBitmap *bitMap, int fileSize);  // Initialize a file header,
                                                             //  including allocating space
                                                             //  on disk for the file data
+    
+    bool AllocateIndirect(PersistentBitmap *bitMap, int needNumSectors);    // allocating space to indirectPointer
+    
     void Deallocate(PersistentBitmap *bitMap);              // De-allocate this file's
                                                             //  data blocks
 
@@ -76,9 +84,9 @@ class FileHeader {
     int numBytes;                // Number of bytes in the file
     int numSectors;              // Number of data sectors in the file
     int dataSectors[NumDirect];  // Disk sector numbers for each data
-    // int singleIndirectDataSectors[NumSingleDirect];   //Indirect pointer numbers for each data
-    // 			// block in the file
+
     int numIndirect;  // Number of indirect pointer in file
+    int singleIndirectSectors[NumSingleIndirect];   // Disk sector numbers for-each singleIndirect sector
     SingleIndirectPointer *table;
 };
 
