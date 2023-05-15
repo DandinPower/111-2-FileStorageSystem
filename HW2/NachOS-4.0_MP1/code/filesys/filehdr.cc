@@ -55,48 +55,57 @@ FileHeader::~FileHeader() {
 bool
 FileHeader::Allocate(PersistentBitmap *freeMap, int fileSize)
 { 
-    cout << fileSize << "\n";
     numBytes = fileSize;
-    numSectors  = divRoundUp(fileSize, SectorSize);
-    if (freeMap->NumClear() < numSectors){
-	    return FALSE;		// not enough space
+    int totalNumOfSectors = divRoundUp(fileSize, SectorSize);
+    numDirectSectors = min(MAX_NUM_OF_DIRECT_POINTER, totalNumOfSectors);
+    if (freeMap->NumClear() < numDirectSectors){
+	    return FALSE;		// not enough space for direct sector
     }
-    
-    int directSectors = min(maximumDirectSectors, numSectors);
-    for (int i = 0; i < directSectors; i++) {
+    for (int i = 0; i < numDirectSectors; i++) {
         dataSectors[i] = freeMap->FindAndSet();
         // since we checked that there was enough free space,
         // we expect this to succeed
         ASSERT(dataSectors[i] >= 0);
     }
+    totalNumOfSectors -= numDirectSectors;
     // need indirect pointer
-    if (numSectors > maximumDirectSectors) {
-        int numSectorsIndirect = numSectors - directSectors; 
-        numIndirect = divRoundUp(numSectorsIndirect, maximumIndirectSectors);
-        bool allocateStatus = AllocateIndirect(freeMap, numSectorsIndirect);
-        if (!allocateStatus) return FALSE;
+    if (totalNumOfSectors > 0) {
+        numIndirectPointerSectors = divRoundUp(totalNumOfSectors, MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER); // Ex. 32 / 31 = 2
+        if(!AllocateIndirect(freeMap, totalNumOfSectors)) return FALSE;
     }
     else {
-        numIndirect = 0;
+        numIndirectPointerSectors = 0;
     }
     return TRUE;
 }
 
 bool 
-FileHeader::AllocateIndirect(PersistentBitmap *freeMap, int numSectors)
+FileHeader::AllocateIndirect(PersistentBitmap *freeMap, int totalNumOfSectors)
 {
     // ensure the pointer is null
     if (table != nullptr) {
         delete[] table;
         table = nullptr;
     }
-    table = new SingleIndirectPointer[numIndirect];
 
-    for (int i = 0; i < numIndirect; i++) {
-        int allocateSectors = min(maximumIndirectSectors, numSectors);
-        bool allocateStatus = table->Allocate(freeMap, allocateSectors);
-        if (!allocateStatus) return FALSE;
-        if (numSectors - allocateSectors > 0)  numSectors -= allocateSectors;
+    table = new SingleIndirectPointer[numIndirectPointerSectors];
+
+    if (freeMap->NumClear() < numIndirectPointerSectors){
+	    return FALSE;
+    }
+    for (int i = 0; i < numIndirectPointerSectors; i++) {
+        singleIndirectSectors[i] = freeMap->FindAndSet();
+        // since we checked that there was enough free space,
+        // we expect this to succeed
+        ASSERT(singleIndirectSectors[i] >= 0);
+    }
+
+    for (int i = 0; i < numIndirectPointerSectors; i++) {
+        if (totalNumOfSectors > 0) {
+            int allocateSectors = min(MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER, totalNumOfSectors);
+            if (!table[i].Allocate(freeMap, allocateSectors)) return FALSE;
+            totalNumOfSectors -= allocateSectors;
+        }
     }
     return TRUE;
 }
@@ -111,13 +120,15 @@ FileHeader::AllocateIndirect(PersistentBitmap *freeMap, int numSectors)
 void 
 FileHeader::Deallocate(PersistentBitmap *freeMap)
 {
-    for (int i = 0; i < numSectors; i++) {
+    for (int i = 0; i < numDirectSectors; i++) {
         ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
         freeMap->Clear((int) dataSectors[i]);
     }
-    for (int i = 0; i < numIndirect; i++) {
+    for (int i = 0; i < numIndirectPointerSectors; i++) {
         table[i].Deallocate(freeMap);
     }
+    delete[] table;
+    table = nullptr;
 }
 
 //----------------------------------------------------------------------
@@ -130,27 +141,25 @@ FileHeader::Deallocate(PersistentBitmap *freeMap)
 void
 FileHeader::FetchFrom(int sector)
 {
+    int cacheArraySize = SectorSize / sizeof(int);
+    int cache[cacheArraySize];
+    kernel->synchDisk->ReadSector(sector, (char*)cache);
+    numBytes = cache[0];
+    numDirectSectors = cache[1];
+    numIndirectPointerSectors = cache[2];
+    for (int i=0; i < MAX_NUM_OF_DIRECT_POINTER; i++){
+        dataSectors[i] = cache[3+i];
+    }
+    
     // ensure the pointer is null
     if (table != nullptr) {
         delete[] table;
         table = nullptr;
     }
-
-    int cacheArraySize = SectorSize / sizeof(int);
-    int cache[cacheArraySize];
-    kernel->synchDisk->ReadSector(sector, (char*)cache);
-    numBytes = cache[0];
-    numSectors = cache[1];
-    numIndirect = cache[2];
-    for (int i=0; i < NumDirect; i++){
-        dataSectors[i] = cache[3+i];
-    }
-
-    table = new SingleIndirectPointer[numIndirect];
-
-    for (int i=0; i < NumSingleIndirect; i++){
-        singleIndirectSectors[i] = cache[3+NumDirect+i];
-        if (i < numIndirect) {
+    table = new SingleIndirectPointer[numIndirectPointerSectors];
+    for (int i = 0; i < NUM_OF_INDIRECT_POINTER; i++){
+        singleIndirectSectors[i] = cache[3 + MAX_NUM_OF_DIRECT_POINTER + i];
+        if (i < numIndirectPointerSectors) {
             table[i].FetchFrom(singleIndirectSectors[i]);
         }
     }
@@ -169,14 +178,14 @@ FileHeader::WriteBack(int sector)
     int cacheArraySize = SectorSize / sizeof(int);
     int cache[cacheArraySize];
     cache[0] = numBytes;
-    cache[1] = numSectors;
-    cache[2] = numIndirect;
-    for (int i=0; i < NumDirect; i++){
-        cache[3+i] = dataSectors[i];
+    cache[1] = numDirectSectors;
+    cache[2] = numIndirectPointerSectors;
+    for (int i = 0; i < MAX_NUM_OF_DIRECT_POINTER; i++){
+        cache[3 + i] = dataSectors[i];
     }
-    for (int i=0; i < NumSingleIndirect; i++){
-        cache[3+NumDirect+i] = singleIndirectSectors[i];
-        if (i < numIndirect) {
+    for (int i = 0; i < NUM_OF_INDIRECT_POINTER; i++){
+        cache[3 + MAX_NUM_OF_DIRECT_POINTER + i] = singleIndirectSectors[i];
+        if (i < numIndirectPointerSectors) {
             table[i].WriteBack(singleIndirectSectors[i]);
         }
     }
@@ -197,7 +206,18 @@ FileHeader::WriteBack(int sector)
 int
 FileHeader::ByteToSector(int offset)
 {
-    return(dataSectors[offset / SectorSize]);
+    int sectorIndex = offset / SectorSize;
+    if (sectorIndex < MAX_NUM_OF_DIRECT_POINTER) 
+    {
+        return dataSectors[sectorIndex];
+    }
+    // count the sector in indirect pointer
+    else {
+        int sectorIndexInWholeIndirect = sectorIndex - MAX_NUM_OF_DIRECT_POINTER;   // Ex. 21 - 21 = 0, 22 - 21 = 1
+        int indirectIndex = sectorIndexInWholeIndirect / MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER;   // Ex. 0 / 31 = 0, 1 / 31 = 0, 31 / 31 = 1
+        sectorIndex = sectorIndexInWholeIndirect % MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER;   // 0 % 31 = 0, 1 % 31 = 1, 31 % 31  = 0
+        return table[indirectIndex].GetSectorByIndex(sectorIndex);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -224,10 +244,10 @@ FileHeader::Print()
     char *data = new char[SectorSize];
 
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
-    for (i = 0; i < numSectors; i++)
+    for (i = 0; i < numDirectSectors; i++)
 	printf("%d ", dataSectors[i]);
     printf("\nFile contents:\n");
-    for (i = k = 0; i < numSectors; i++) {
+    for (i = k = 0; i < numDirectSectors; i++) {
 	kernel->synchDisk->ReadSector(dataSectors[i], data);
         for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
 	    if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
@@ -247,7 +267,6 @@ SingleIndirectPointer::Allocate(PersistentBitmap *freeMap, int needNumSectors)
     if (freeMap->NumClear() < numSectors){
 	    return FALSE;		// not enough space
     }
-
     for (int i = 0; i < numSectors; i++) {
         dataSectors[i] = freeMap->FindAndSet();
         // since we checked that there was enough free space,
@@ -273,8 +292,8 @@ SingleIndirectPointer::FetchFrom(int sector)
     int cache[cacheArraySize];
     kernel->synchDisk->ReadSector(sector, (char*)cache);
     numSectors = cache[0];
-    for (int i=0; i < maximumIndirectSectors; i++){
-        cache[1+i] = dataSectors[i];
+    for (int i=0; i < MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER; i++){
+        dataSectors[i] = cache[1+i];
     }
 }
 
@@ -284,9 +303,15 @@ SingleIndirectPointer::WriteBack(int sector)
     int cacheArraySize = SectorSize / sizeof(int);
     int cache[cacheArraySize];
     cache[0] = numSectors;
-    for (int i=0; i < maximumIndirectSectors; i++){
+    for (int i=0; i < MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER; i++){
         cache[1+i] = dataSectors[i];
     }
-
     kernel->synchDisk->WriteSector(sector, (char*)cache); 
+}
+
+int
+SingleIndirectPointer::GetSectorByIndex(int sectorIndex)
+{
+    ASSERT(numSectors > sectorIndex); // prevent out of range access
+    return dataSectors[sectorIndex];
 }
