@@ -3,7 +3,7 @@
 int main(void)
 {
 	char test[] = "abcdefghijklmnopqrstuvwxyz\n";
-	int iterations = 20;
+	int iterations = 100;
 	int length = 27 * iterations;
 	int success = Create("/file3", length);
 	OpenFileId fid;

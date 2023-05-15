@@ -244,20 +244,20 @@ FileHeader::Print()
     char *data = new char[SectorSize];
 
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
-    for (i = 0; i < numDirectSectors; i++)
-	printf("%d ", dataSectors[i]);
-    printf("\nFile contents:\n");
     for (i = k = 0; i < numDirectSectors; i++) {
-	kernel->synchDisk->ReadSector(dataSectors[i], data);
+        printf("\nFile contents in Sector %d:\n", dataSectors[i]);
+        kernel->synchDisk->ReadSector(dataSectors[i], data);
         for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
-	    if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
-		printf("%c", data[j]);
-            else
-		printf("\\%x", (unsigned char)data[j]);
-	}
+            if ('\040' <= data[j] && data[j] <= '\176') {
+                printf("%c", data[j]);
+            }
+            else {
+                printf("\\%x", (unsigned char)data[j]);
+            }
+        }
         printf("\n"); 
+        delete [] data;
     }
-    delete [] data;
 }
 
 bool 
