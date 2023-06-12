@@ -37,6 +37,7 @@
 #include "copyright.h"
 #include "sysdep.h"
 #include "openfile.h"
+#include "directory.h"
 
 typedef int OpenFileId;
 
@@ -136,6 +137,13 @@ class FileSystem {
     					// If "format", there is nothing on
 					// the disk, so initialize the directory
     					// and the bitmap of free blocks.
+	~FileSystem();
+
+	bool CreateDirectory(char *name);	// Create a directory on currentDirectory
+
+	bool ChangeCurrentDirectory(char *name);	// change current directory based on current directory by name
+
+	void ResetToRootDirectory();
 
     bool Create(char *name, int initialSize);  	
 					// Create a file (UNIX creat)
@@ -151,8 +159,8 @@ class FileSystem {
 	int CloseFile(OpenFileId fd);
 
     bool Remove(char *name);  		// Delete a file (UNIX unlink)
-
-    void List();			// List all the files in the file system
+	
+	void List();			// List all the files in the file system
 
     void Print();			// List all the files and their contents
 
@@ -161,6 +169,11 @@ class FileSystem {
 					// represented as a file
 	OpenFile* directoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
+
+	OpenFile* currentDirectoryFile;
+
+	Directory* currentDirectory;
+
 	std::map<OpenFileId, OpenFile*> table;
 };
 
