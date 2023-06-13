@@ -178,6 +178,36 @@ bool Directory::Remove(int index) {
     return TRUE;
 }
 
+bool Directory::RemoveRecursive(PersistentBitmap *freeMap) {
+    for (int i = 0; i < tableSize; i++)
+        if (table[i].inUse) {
+            if (table[i].fileType == DIR_TYPE) {
+                OpenFile *removeDirFile = new OpenFile(table[i].sector);
+                Directory *removeDir = new Directory(NumDirEntries);
+                removeDir->FetchFrom(removeDirFile);
+                removeDir->RemoveRecursive(freeMap);
+                removeDir->WriteBack(removeDirFile);
+                delete removeDirFile;
+                delete removeDir;
+
+                FileHeader *fileHdr = new FileHeader;
+                fileHdr->FetchFrom(table[i].sector);
+                fileHdr->Deallocate(freeMap);  // remove data blocks
+                freeMap->Clear(table[i].sector);        // remove header block
+                Remove(table[i].sector);                // flush to disk
+                delete fileHdr;
+            }
+            else {
+                FileHeader *fileHdr = new FileHeader;
+                fileHdr->FetchFrom(table[i].sector);
+                fileHdr->Deallocate(freeMap);  // remove data blocks
+                freeMap->Clear(table[i].sector);        // remove header block
+                Remove(table[i].sector);                // flush to disk
+                delete fileHdr;
+            }
+        }
+}
+
 //----------------------------------------------------------------------
 // Directory::List
 // 	List all the file names in the directory.
@@ -212,7 +242,7 @@ void Directory::ListRecursive(int offset) {
                 OpenFile *subDirFile = new OpenFile(subSector);
                 Directory *subDir = new Directory(NumDirEntries);
                 subDir->FetchFrom(subDirFile);
-                subDir->ListRecursive(offset + 2);
+                subDir->ListRecursive(offset + 3);
                 delete subDir;
             } else {
                 printf("%s[%d] %s %c\n", offsetStr, i, table[i].name, c);

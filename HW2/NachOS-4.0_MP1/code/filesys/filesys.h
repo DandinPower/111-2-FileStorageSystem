@@ -168,6 +168,10 @@ class FileSystem {
 
     bool Remove(char *name);  // Delete a file (UNIX unlink)
 
+	bool RemoveDir(int sector, char *dirName);	// Delete a directory based on current dir
+
+	bool RemoveFile(int sector, char *fileName);	// Delete a file based on current dir
+
     void List(char *path);  // List all the files in the file system path
 
     void ListRecursive(char *path);  // Recursively List all the files.

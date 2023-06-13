@@ -17,6 +17,7 @@
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
+#include "pbitmap.h"
 #include "openfile.h"
 
 #define FILE_TYPE 1
@@ -81,6 +82,8 @@ class Directory {
     bool Remove(char *name);  // Remove a file from the directory
 
     bool Remove(int index);  // Remove a file from the directory by entry index
+
+    bool RemoveRecursive(PersistentBitmap *freeMap);   // Remove everything inside this dir
 
     void List();  // Print the names of all the files
                   //  in the directory

@@ -446,31 +446,65 @@ int FileSystem::CloseFile(OpenFileId fd) {
 //----------------------------------------------------------------------
 
 bool FileSystem::Remove(char *path) {
-    PersistentBitmap *freeMap;
-    FileHeader *fileHdr;
     int sector;
     char currentPath[PATH_MAX_LEN];
     char filename[FileNameMaxLen];
     memset(currentPath, 0, sizeof(char) * PATH_MAX_LEN);
     memset(filename, 0, sizeof(char) * FileNameMaxLen);
     if (ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
+        if (strcmp(filename, "")==0) {
+            cout << "Can't remove root dir" << endl;
+            return FALSE;
+        }
         sector = currentDirectory->Find(filename);
         if (sector == -1) {
             return FALSE;  // file not found
         }
-        fileHdr = new FileHeader;
-        fileHdr->FetchFrom(sector);
-        freeMap = new PersistentBitmap(freeMapFile, NumSectors);
-        fileHdr->Deallocate(freeMap);  // remove data blocks
-        freeMap->Clear(sector);        // remove header block
-        currentDirectory->Remove(filename);
-        freeMap->WriteBack(freeMapFile);                    // flush to disk
-        currentDirectory->WriteBack(currentDirectoryFile);  // flush to disk
-        delete fileHdr;
-        delete freeMap;
+        if (currentDirectory->IsDirectory(filename)) {
+            RemoveDir(sector, filename);
+        }
+        else {
+            RemoveFile(sector, filename);
+        }
     }
     ResetToRootDirectory();
     return TRUE;
+}
+
+bool FileSystem::RemoveDir(int sector, char *dirName) {
+    PersistentBitmap *freeMap = new PersistentBitmap(freeMapFile, NumSectors);
+    OpenFile *removeDirFile = new OpenFile(sector);
+    Directory *removeDir = new Directory(NumDirEntries);
+    removeDir->FetchFrom(removeDirFile);
+    removeDir->RemoveRecursive(freeMap);
+    removeDir->WriteBack(removeDirFile);
+    delete removeDirFile;
+    delete removeDir;
+
+    FileHeader *fileHdr = new FileHeader;
+    fileHdr->FetchFrom(sector);
+    fileHdr->Deallocate(freeMap);  // remove data blocks
+    freeMap->Clear(sector);        // remove header block
+    currentDirectory->Remove(dirName);
+    freeMap->WriteBack(freeMapFile);                    // flush to disk
+    currentDirectory->WriteBack(currentDirectoryFile);  // flush to disk
+    delete fileHdr;
+    delete freeMap;
+}
+
+bool FileSystem::RemoveFile(int sector, char *fileName) {
+    PersistentBitmap *freeMap;
+    FileHeader *fileHdr;
+    fileHdr = new FileHeader;
+    fileHdr->FetchFrom(sector);
+    freeMap = new PersistentBitmap(freeMapFile, NumSectors);
+    fileHdr->Deallocate(freeMap);  // remove data blocks
+    freeMap->Clear(sector);        // remove header block
+    currentDirectory->Remove(fileName);
+    freeMap->WriteBack(freeMapFile);                    // flush to disk
+    currentDirectory->WriteBack(currentDirectoryFile);  // flush to disk
+    delete fileHdr;
+    delete freeMap;
 }
 
 //----------------------------------------------------------------------

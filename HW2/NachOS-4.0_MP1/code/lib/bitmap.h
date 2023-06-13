@@ -16,7 +16,7 @@
 #define BITMAP_H
 
 #include "copyright.h"
-#include "utility.h"
+// #include "utility.h"
 
 // Definitions helpful for representing a bitmap as an array of integers
 const int BitsInByte =	8;

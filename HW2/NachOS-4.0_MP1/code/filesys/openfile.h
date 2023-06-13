@@ -21,7 +21,7 @@
 #define OPENFILE_H
 
 #include "copyright.h"
-#include "utility.h"
+// #include "utility.h"
 #include "sysdep.h"
 
 #ifdef FILESYS_STUB			// Temporarily implement calls to 
