@@ -129,6 +129,10 @@ class FileSystem {
 };
 
 #else // FILESYS
+
+#define PATH_DEPTH 25
+#define PATH_MAX_LEN PATH_DEPTH * (FileNameMaxLen) + 1	// max path length
+
 class FileSystem {
   public:
     FileSystem(bool format);		// Initialize the file system.
@@ -142,8 +146,12 @@ class FileSystem {
 	bool CreateDirectory(char *name);	// Create a directory on currentDirectory
 
 	bool ChangeCurrentDirectory(char *name);	// change current directory based on current directory by name
+	
+	bool ChangeCurrentDirectoryByWholePath(char *path, char *currentPath, char *filename);	// change current directory based on root by path, currentPath is /test if path is /test/test1, filename is test1 if path is /test/test1
 
-	void ResetToRootDirectory();
+	void ResetToRootDirectory();	// change current directory to root
+
+	bool CreateFile(char *name, int initialSize);
 
     bool Create(char *name, int initialSize);  	
 					// Create a file (UNIX creat)

@@ -167,7 +167,6 @@ bool Directory::RemoveRecursive() {
 bool Directory::Add(char *name, int newSector, int type) {
     if (FindIndex(name) != -1)
         return FALSE;
-
     for (int i = 0; i < tableSize; i++)
         if (!table[i].inUse) {
             table[i].inUse = TRUE;

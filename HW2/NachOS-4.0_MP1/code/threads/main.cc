@@ -126,7 +126,7 @@ void Print(char *name) {
     OpenFile *openFile;
     int i, amountRead;
     char *buffer;
-
+    printf("Print: file %s\n", name);
     if ((openFile = kernel->fileSystem->Open(name)) == NULL) {
         printf("Print: unable to open file %s\n", name);
         return;
@@ -143,40 +143,18 @@ void Print(char *name) {
 }
 
 static void CreateDirectory(char *path) {
-    if(path[0] != '/') {
-        std::cout << "path didn't start with '/'" << std::endl;
-    }
-    else {
-        std:string currentPath = "/";
-        char *pathArr[20];
-        int pathLength = 0;
-        // Pointer to point the word returned by the strtok() function.
-        char * p;
-        // Here, the delimiter is white space.
-        p = strtok(path, "/"); 
-        while (p != NULL) {
-            pathArr[pathLength] = p;
-            pathLength += 1;
-            p = strtok(NULL, "/");
-        }
-        // traverse dir if not found, cout error
-        for (int i=0; i<pathLength-1; i++) {
-            if (!kernel->fileSystem->ChangeCurrentDirectory(pathArr[i])) {
-                std::cout << "didn't found dir: " << pathArr[i] << " in dir: " << currentPath << std::endl;
-                return;
-            }
-            currentPath += pathArr[i];
-            currentPath += "/";
-        }
+    char currentPath[PATH_MAX_LEN];
+    char filename[FileNameMaxLen];
+    memset(currentPath, 0, sizeof(char) * PATH_MAX_LEN);
+    memset(filename, 0, sizeof(char) * FileNameMaxLen);
+    if (kernel->fileSystem->ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
         // create dir on the based on current dir
-        if (kernel->fileSystem->CreateDirectory(pathArr[pathLength-1])) {
-            std::cout << "create dir: " << pathArr[pathLength-1] << " in dir: \"" << currentPath << "\" success!" << std::endl;
-        }
-        else {
-            std::cout << "create dir: " << pathArr[pathLength-1] << " in dir: \"" << currentPath << "\" fail!" << std::endl;
-        }
-        kernel->fileSystem->ResetToRootDirectory();
+        if (kernel->fileSystem->CreateDirectory(filename))
+            std::cout << "create dir: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
+        else
+            std::cout << "create dir: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
     }
+    kernel->fileSystem->ResetToRootDirectory();
 }
 
 //----------------------------------------------------------------------
