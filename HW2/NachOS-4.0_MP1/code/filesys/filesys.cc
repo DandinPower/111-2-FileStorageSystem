@@ -494,15 +494,33 @@ void FileSystem::List(char *path) {
     memset(filename, 0, sizeof(char) * FileNameMaxLen);
     if (ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
         if (strcmp(filename, "")) {
-            if (!ChangeCurrentDirectory(filename)) {
-                // std::cout << "didn't found dir: " << filename << " in dir: " << currentPath << std::endl;
-            }
-            else {
+            if (ChangeCurrentDirectory(filename))
                 strcat(currentPath, filename);
-            }
         }
         // std::cout << "List file in dir \"" << currentPath << "\"" << std::endl;
         currentDirectory->List();
+    }
+    ResetToRootDirectory();
+}
+
+//----------------------------------------------------------------------
+// FileSystem::ListRecursive
+// 	List all the files in the file system directory recursively.
+//----------------------------------------------------------------------
+
+void FileSystem::ListRecursive(char *path) {
+    char currentPath[PATH_MAX_LEN];
+    char filename[FileNameMaxLen];
+    memset(currentPath, 0, sizeof(char) * PATH_MAX_LEN);
+    memset(filename, 0, sizeof(char) * FileNameMaxLen);
+    if (ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
+        if (strcmp(filename, "")) {
+            if (ChangeCurrentDirectory(filename))
+                strcat(currentPath, filename);
+        }
+        int offset = 0;
+        // std::cout << "List file in dir \"" << currentPath << "\"" << std::endl;
+        currentDirectory->ListRecursive(offset);
     }
     ResetToRootDirectory();
 }

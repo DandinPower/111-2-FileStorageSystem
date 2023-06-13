@@ -86,6 +86,19 @@ class FileHeader {
     int dataSectors[MAX_NUM_OF_DIRECT_POINTER];  // Disk sector numbers for each data
     int numIndirectPointerSectors;  // Number of indirect pointer in file
     int singleIndirectSectors[NUM_OF_INDIRECT_POINTER];  // Disk sector numbers for-each singleIndirect sector
+
+    // int numBytes;
+    // int numDirectSectors;
+    // int numSingleSectors;
+    // int numDoubleSectors;
+    // int numTripleSectors;
+    // int *directSectors;
+    // int *singleIndirectSectors;
+    // int *doubleIndirectSectors;
+    // int *tripleIndirectSectors;
+
+
+
     SingleIndirectPointer *table;
 };
 

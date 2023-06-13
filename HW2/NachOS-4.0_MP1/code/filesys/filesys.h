@@ -170,6 +170,8 @@ class FileSystem {
 	
 	void List(char *path);			// List all the files in the file system path
 
+	void ListRecursive(char *path);		// Recursively List all the files.
+
     void Print();			// List all the files and their contents
 
   private:

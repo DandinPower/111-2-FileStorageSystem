@@ -84,8 +84,11 @@ class Directory {
 
     bool RemoveRecursive();  // Remove every thing inside this dir
 
-    void List();   // Print the names of all the files
-                   //  in the directory
+    void List();  // Print the names of all the files
+                  //  in the directory
+
+    void ListRecursive(int offset);
+
     void Print();  // Verbose print of the contents
                    //  of the directory -- all the file
                    //  names and their contents.

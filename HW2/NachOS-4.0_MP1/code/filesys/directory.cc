@@ -215,6 +215,35 @@ void Directory::List() {
 }
 
 //----------------------------------------------------------------------
+// Directory::ListRecursive
+// 	Recursively list all the file names in the directory.
+//----------------------------------------------------------------------
+
+void Directory::ListRecursive(int offset) {
+    char offsetStr[200];
+    memset(offsetStr, ' ', offset);
+    offsetStr[offset] = '\0';
+    
+    for (int i = 0; i < tableSize; i++)
+        if (table[i].inUse) {
+            char c = 'F';
+            if (table[i].fileType == DIR_TYPE) {
+                c = 'D';
+                printf("%s[%d] %s %c\n",offsetStr, i, table[i].name, c);
+                int subSector = table[i].sector;
+                OpenFile *subDirFile = new OpenFile(subSector);
+                Directory *subDir = new Directory(NumDirEntries);
+                subDir->FetchFrom(subDirFile);
+                subDir->ListRecursive(offset + 2);
+                delete subDir;
+            }
+            else {
+                printf("[%d] %s %c\n", i, table[i].name, c);
+            }
+        }
+}
+
+//----------------------------------------------------------------------
 // Directory::Print
 // 	List all the file names in the directory, their FileHeader locations,
 //	and the contents of each file.  For debugging.

@@ -185,8 +185,10 @@ int main(int argc, char **argv) {
     char *removeFileName = NULL;
     char *createDirName = NULL;
     char *dirListPath = NULL;
+    char *dirListRecurPath = NULL;
     bool createDirFlag = false;
     bool dirListFlag = false;
+    bool dirListRecurFlag = false;
     bool dumpFlag = false;
     bool formatFlag = false;
 #endif  // FILESYS_STUB
@@ -237,6 +239,10 @@ int main(int argc, char **argv) {
             ASSERT(i + 1 < argc);
             dirListPath = argv[i + 1];
             dirListFlag = true;
+        } else if (strcmp(argv[i], "-lr") == 0) {
+            ASSERT(i + 1 < argc);
+            dirListRecurPath = argv[i + 1];
+            dirListRecurFlag = true;
         } else if (strcmp(argv[i], "-D") == 0) {
             dumpFlag = true;
         }
@@ -288,6 +294,10 @@ int main(int argc, char **argv) {
     }
     if (dirListFlag) {
         kernel->fileSystem->List(dirListPath);
+        kernel->interrupt->Halt();
+    }
+    if (dirListRecurFlag) {
+        kernel->fileSystem->ListRecursive(dirListRecurPath);
         kernel->interrupt->Halt();
     }
     if (printFileName != NULL) {
