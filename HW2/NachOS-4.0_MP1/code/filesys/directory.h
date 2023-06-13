@@ -82,8 +82,6 @@ class Directory {
 
     bool Remove(int index);  // Remove a file from the directory by entry index
 
-    bool RemoveRecursive();  // Remove every thing inside this dir
-
     void List();  // Print the names of all the files
                   //  in the directory
 
