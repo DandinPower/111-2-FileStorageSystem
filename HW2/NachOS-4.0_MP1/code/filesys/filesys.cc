@@ -214,7 +214,8 @@ bool FileSystem::ChangeCurrentDirectoryByWholePath(char *path, char *currentPath
             strcat(currentParsePath, "/");
         }
         strcpy(currentPath, currentParsePath);
-        strcpy(filename, pathArr[pathLength -1]);
+        if (pathLength > 0)
+            strcpy(filename, pathArr[pathLength -1]);
         return true;
     }
 }
@@ -453,30 +454,31 @@ int FileSystem::CloseFile(OpenFileId fd) {
 //	"name" -- the text name of the file to be removed
 //----------------------------------------------------------------------
 
-bool FileSystem::Remove(char *name) {
-    currentDirectory;
+bool FileSystem::Remove(char *path) {
     PersistentBitmap *freeMap;
     FileHeader *fileHdr;
     int sector;
-
-    currentDirectory->FetchFrom(directoryFile);
-    sector = currentDirectory->Find(name);
-    if (sector == -1) {
-        return FALSE;  // file not found
+    char currentPath[PATH_MAX_LEN];
+    char filename[FileNameMaxLen];
+    memset(currentPath, 0, sizeof(char) * PATH_MAX_LEN);
+    memset(filename, 0, sizeof(char) * FileNameMaxLen);
+    if (ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
+        sector = currentDirectory->Find(filename);
+        if (sector == -1) {
+            return FALSE;  // file not found
+        }
+        fileHdr = new FileHeader;
+        fileHdr->FetchFrom(sector);
+        freeMap = new PersistentBitmap(freeMapFile, NumSectors);
+        fileHdr->Deallocate(freeMap);  // remove data blocks
+        freeMap->Clear(sector);        // remove header block
+        currentDirectory->Remove(filename);
+        freeMap->WriteBack(freeMapFile);             // flush to disk
+        currentDirectory->WriteBack(currentDirectoryFile);  // flush to disk
+        delete fileHdr;
+        delete freeMap;
     }
-    fileHdr = new FileHeader;
-    fileHdr->FetchFrom(sector);
-
-    freeMap = new PersistentBitmap(freeMapFile, NumSectors);
-
-    fileHdr->Deallocate(freeMap);  // remove data blocks
-    freeMap->Clear(sector);        // remove header block
-    currentDirectory->Remove(name);
-
-    freeMap->WriteBack(freeMapFile);             // flush to disk
-    currentDirectory->WriteBack(directoryFile);  // flush to disk
-    delete fileHdr;
-    delete freeMap;
+    ResetToRootDirectory();
     return TRUE;
 }
 
@@ -485,9 +487,24 @@ bool FileSystem::Remove(char *name) {
 // 	List all the files in the file system directory.
 //----------------------------------------------------------------------
 
-void FileSystem::List() {
-    currentDirectory->FetchFrom(directoryFile);
-    currentDirectory->List();
+void FileSystem::List(char *path) {
+    char currentPath[PATH_MAX_LEN];
+    char filename[FileNameMaxLen];
+    memset(currentPath, 0, sizeof(char) * PATH_MAX_LEN);
+    memset(filename, 0, sizeof(char) * FileNameMaxLen);
+    if (ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
+        if (strcmp(filename, "")) {
+            if (!ChangeCurrentDirectory(filename)) {
+                // std::cout << "didn't found dir: " << filename << " in dir: " << currentPath << std::endl;
+            }
+            else {
+                strcat(currentPath, filename);
+            }
+        }
+        // std::cout << "List file in dir \"" << currentPath << "\"" << std::endl;
+        currentDirectory->List();
+    }
+    ResetToRootDirectory();
 }
 
 //----------------------------------------------------------------------

@@ -168,7 +168,7 @@ class FileSystem {
 
     bool Remove(char *name);  		// Delete a file (UNIX unlink)
 	
-	void List();			// List all the files in the file system
+	void List(char *path);			// List all the files in the file system path
 
     void Print();			// List all the files and their contents
 

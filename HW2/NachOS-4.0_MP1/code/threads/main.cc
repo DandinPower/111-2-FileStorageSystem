@@ -41,11 +41,12 @@
 #include "copyright.h"
 #undef MAIN
 
+#include <string.h>
+
 #include "filesys.h"
 #include "main.h"
 #include "openfile.h"
 #include "sysdep.h"
-#include <string.h>
 
 // global variables
 Kernel *kernel;
@@ -126,7 +127,6 @@ void Print(char *name) {
     OpenFile *openFile;
     int i, amountRead;
     char *buffer;
-    printf("Print: file %s\n", name);
     if ((openFile = kernel->fileSystem->Open(name)) == NULL) {
         printf("Print: unable to open file %s\n", name);
         return;
@@ -184,6 +184,7 @@ int main(int argc, char **argv) {
     char *printFileName = NULL;
     char *removeFileName = NULL;
     char *createDirName = NULL;
+    char *dirListPath = NULL;
     bool createDirFlag = false;
     bool dirListFlag = false;
     bool dumpFlag = false;
@@ -233,6 +234,8 @@ int main(int argc, char **argv) {
             createDirFlag = true;
             i++;
         } else if (strcmp(argv[i], "-l") == 0) {
+            ASSERT(i + 1 < argc);
+            dirListPath = argv[i + 1];
             dirListFlag = true;
         } else if (strcmp(argv[i], "-D") == 0) {
             dumpFlag = true;
@@ -274,6 +277,7 @@ int main(int argc, char **argv) {
 #ifndef FILESYS_STUB
     if (removeFileName != NULL) {
         kernel->fileSystem->Remove(removeFileName);
+        kernel->interrupt->Halt();
     }
     if (copyUnixFileName != NULL && copyNachosFileName != NULL) {
         Copy(copyUnixFileName, copyNachosFileName);
@@ -283,7 +287,7 @@ int main(int argc, char **argv) {
         kernel->fileSystem->Print();
     }
     if (dirListFlag) {
-        kernel->fileSystem->List();
+        kernel->fileSystem->List(dirListPath);
         kernel->interrupt->Halt();
     }
     if (printFileName != NULL) {

@@ -207,8 +207,11 @@ bool Directory::Remove(int index) {
 
 void Directory::List() {
     for (int i = 0; i < tableSize; i++)
-        if (table[i].inUse)
-            printf("%s\n", table[i].name);
+        if (table[i].inUse) {
+            char c = 'F';
+            if (table[i].fileType == DIR_TYPE) c = 'D';
+            printf("[%d] %s %c\n", i, table[i].name, c);
+        }
 }
 
 //----------------------------------------------------------------------
