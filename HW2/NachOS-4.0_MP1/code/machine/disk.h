@@ -48,8 +48,8 @@
 // The track buffer simulation can be disabled by compiling with -DNOTRACKBUF
 
 const int SectorSize = 128;		// number of bytes per disk sector
-const int SectorsPerTrack  = 1024;	// number of sectors per disk track 
-const int NumTracks = 1024;		// number of tracks per disk, one more for metadata
+const int SectorsPerTrack  = 32;	// number of sectors per disk track 
+const int NumTracks = 16384;		// number of tracks per disk, one more for metadata
 // const int NumTracks = 32;		// number of tracks per disk, one more for metadata
 const int NumSectors = (SectorsPerTrack * NumTracks);
 					// total # of sectors per disk

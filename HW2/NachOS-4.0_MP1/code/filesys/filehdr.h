@@ -91,7 +91,7 @@ class SingleIndirectPointer : public DataPointerInterface {
    private:
     int numPointer;  // Number of pointer in the file
     int pointerSectors[NUM_INDIRECT_POINTER];
-    DirectPointer table[NUM_INDIRECT_POINTER];
+    // DirectPointer table[NUM_INDIRECT_POINTER];
 };
 
 class DoubleIndirectPointer : public DataPointerInterface {
@@ -107,6 +107,21 @@ class DoubleIndirectPointer : public DataPointerInterface {
     int numPointer;  // Number of pointer in the file
     int pointerSectors[NUM_INDIRECT_POINTER];
     SingleIndirectPointer table[NUM_INDIRECT_POINTER];
+};
+
+class TripleIndirectPointer : public DataPointerInterface {
+   public:
+    ~TripleIndirectPointer() override;
+    bool Allocate(PersistentBitmap *bitMap, int numSectors) override;
+    void Deallocate(PersistentBitmap *bitMap) override;
+    void FetchFrom(int sectorNumber) override;
+    void WriteBack(int sectorNumber) override;
+    int ByteToSector(int offset) override;
+
+   private:
+    int numPointer;  // Number of pointer in the file
+    int pointerSectors[NUM_INDIRECT_POINTER];
+    DoubleIndirectPointer table[NUM_INDIRECT_POINTER];
 };
 
 class FileHeader {
