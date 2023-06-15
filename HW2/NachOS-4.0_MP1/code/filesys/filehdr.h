@@ -17,14 +17,26 @@
 #include "disk.h"
 #include "pbitmap.h"
 
-#define NUM_OF_POINTER_IN_SECTOR (SectorSize / sizeof(int)) // 128 / 4 = 32
-#define INDIRECT_SECTOR_FILE_SIZE (SectorSize * (NUM_OF_POINTER_IN_SECTOR - 1))   // 128 * (32 - 1) = 3968
-#define NUM_OF_INDIRECT_POINTER 8
-#define NUM_OF_DIRECT_POINTER (NUM_OF_POINTER_IN_SECTOR - NUM_OF_INDIRECT_POINTER - 3)  // 32 - 8 - 3 = 21
-#define MAX_FILE_SIZE ((NUM_OF_DIRECT_POINTER * SectorSize) + (NUM_OF_INDIRECT_POINTER * INDIRECT_SECTOR_FILE_SIZE))    // ((21 * 128) + (8 * 3968)) = 2688 + 31744 = 34432
+#define NUM_INT_IN_SECTOR (SectorSize / sizeof(int))
+#define NUM_FILE_HEADER_POINTER (NUM_INT_IN_SECTOR - 2)
+#define NUM_INDIRECT_POINTER (NUM_INT_IN_SECTOR - 1)
 
-const int MAX_NUM_OF_DIRECT_POINTER = NUM_OF_DIRECT_POINTER;    // 21
-const int MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER = NUM_OF_POINTER_IN_SECTOR - 1;   // 32 - 1 = 31
+#define LEVEL_1_SECTOR_NUM NUM_FILE_HEADER_POINTER
+#define LEVEL_2_SECTOR_NUM NUM_FILE_HEADER_POINTER *NUM_INDIRECT_POINTER
+#define LEVEL_3_SECTOR_NUM NUM_FILE_HEADER_POINTER *NUM_INDIRECT_POINTER *NUM_INDIRECT_POINTER
+#define LEVEL_4_SECTOR_NUM NUM_FILE_HEADER_POINTER *NUM_INDIRECT_POINTER *NUM_INDIRECT_POINTER *NUM_INDIRECT_POINTER
+
+#define LEVEL_1_SIZE SectorSize *LEVEL_1_SECTOR_NUM  // 128bytes * 30 = 3840bytes
+#define LEVEL_2_SIZE SectorSize *LEVEL_2_SECTOR_NUM  // 128bytes * 30 * 31 = 119040bytes(116kB)
+#define LEVEL_3_SIZE SectorSize *LEVEL_3_SECTOR_NUM  // 128bytes * 30 * 31 * 31 = 3690240bytes(3.5mB)
+#define LEVEL_4_SIZE SectorSize *LEVEL_4_SECTOR_NUM  // 128bytes * 30 * 31 * 31 * 31 = 114,397,440bytes(109mB)
+
+#define LEVEL_1 1
+#define LEVEL_2 2
+#define LEVEL_3 3
+#define LEVEL_4 4
+
+const int SECTOR_NUM_IN_LEVEL[5] = {1, LEVEL_1_SECTOR_NUM, LEVEL_2_SECTOR_NUM, LEVEL_3_SECTOR_NUM, LEVEL_4_SECTOR_NUM};
 
 // The following class defines the Nachos "file header" (in UNIX terms,
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -41,18 +53,41 @@ const int MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER = NUM_OF_POINTER_IN_SECTOR - 1
 // by allocating blocks for the file (if it is a new file), or by
 // reading it from disk.
 
-class SingleIndirectPointer {
+class DataPointerInterface {
    public:
-    bool Allocate(PersistentBitmap *bitMap, int numSectors);
-    void Deallocate(PersistentBitmap *bitMap);
-    void FetchFrom(int sectorNumber);
-    void WriteBack(int sectorNumber);
-    int GetSectorByIndex(int sectorIndex);
+    virtual ~DataPointerInterface() = 0;
+    virtual bool Allocate(PersistentBitmap *bitMap, int numSectors) = 0;
+    virtual void Deallocate(PersistentBitmap *bitMap) = 0;
+    virtual void FetchFrom(int sectorNumber) = 0;
+    virtual void WriteBack(int sectorNumber) = 0;
+    virtual int ByteToSector(int offset) = 0;
+};
+
+class DirectPointer : public DataPointerInterface {
+   public:
+    ~DirectPointer() override;
+    bool Allocate(PersistentBitmap *bitMap, int numSectors) override;
+    void Deallocate(PersistentBitmap *bitMap) override;
+    void FetchFrom(int sectorNumber) override;
+    void WriteBack(int sectorNumber) override;
+    int ByteToSector(int offset) override;
 
    private:
-    int numSectors;  // Number of data sectors;
-    int dataSectors[MAX_NUM_OF_SECTORS_IN_INDIIRECT_POINTER];
+    int dataSector;
 };
+
+// class SingleIndirectPointer {
+//    public:
+//     bool Allocate(PersistentBitmap *bitMap, int numSectors);
+//     void Deallocate(PersistentBitmap *bitMap);
+//     void FetchFrom(int sectorNumber);
+//     void WriteBack(int sectorNumber);
+//     int GetSectorByIndex(int sectorIndex);
+
+//    private:
+//     int numSectors;  // Number of data sectors;
+//     int dataSectors[NUM_INDIRECT_POINTER];
+// };
 
 class FileHeader {
    public:
@@ -81,25 +116,11 @@ class FileHeader {
     void Print();  // Print the contents of the file.
 
    private:
-    int numBytes;                // Number of bytes in the file
-    int numDirectSectors;              // Number of direct data sectors in the file
-    int dataSectors[MAX_NUM_OF_DIRECT_POINTER];  // Disk sector numbers for each data
-    int numIndirectPointerSectors;  // Number of indirect pointer in file
-    int singleIndirectSectors[NUM_OF_INDIRECT_POINTER];  // Disk sector numbers for-each singleIndirect sector
-
-    // int numBytes;
-    // int numDirectSectors;
-    // int numSingleSectors;
-    // int numDoubleSectors;
-    // int numTripleSectors;
-    // int *directSectors;
-    // int *singleIndirectSectors;
-    // int *doubleIndirectSectors;
-    // int *tripleIndirectSectors;
-
-
-
-    SingleIndirectPointer *table;
+    int numBytes;    // Number of bytes in the file
+    int numPointer;  // Number of pointer in the file
+    int pointerSectors[NUM_FILE_HEADER_POINTER];
+    int level;                                             // represent the header level, not necessary to write back to disk
+    DataPointerInterface *table[NUM_FILE_HEADER_POINTER];  // it may have direct, singleIndirect...
 };
 
 #endif  // FILEHDR_H

@@ -49,7 +49,8 @@
 
 const int SectorSize = 128;		// number of bytes per disk sector
 const int SectorsPerTrack  = 32;	// number of sectors per disk track 
-const int NumTracks = 32;		// number of tracks per disk
+// const int NumTracks = 16385;		// number of tracks per disk, one more for metadata
+const int NumTracks = 32;		// number of tracks per disk, one more for metadata
 const int NumSectors = (SectorsPerTrack * NumTracks);
 					// total # of sectors per disk
 

@@ -98,7 +98,6 @@ FileSystem::FileSystem(bool format) {
 
         // Second, allocate space for the data blocks containing the contents
         // of the directory and bitmap files.  There better be enough space!
-
         ASSERT(mapHdr->Allocate(freeMap, FreeMapFileSize));
         ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
 
@@ -114,7 +113,7 @@ FileSystem::FileSystem(bool format) {
         // OK to open the bitmap and directory files now
         // The file system operations assume these two files are left open
         // while Nachos is running.
-
+        
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
 
