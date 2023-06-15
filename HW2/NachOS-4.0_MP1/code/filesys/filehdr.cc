@@ -73,58 +73,75 @@ int DirectPointer::ByteToSector(int offset) {
     return dataSector;  // because for direct pointer, only have one dataSector
 }
 
-// SingleIndirectPointer::~SingleIndirectPointer() {
-//     // not necessary to do anything
-// }
+SingleIndirectPointer::~SingleIndirectPointer() {
+    // not necessary to do anything
+}
 
-// bool SingleIndirectPointer::Allocate(PersistentBitmap *freeMap, int numSectors) {
-//     ASSERT(numSectors <= LEVEL_1_SECTOR_NUM);  // because directPointer must  only have 1
-//     numPointer = numSectors;
-//     if (freeMap->NumClear() < numPointer) {
-//         return false;  // not enough space for pointer
-//     }
-//     for (int i = 0; i < numPointer; i++) {
-//         pointerSectors[i] = freeMap->FindAndSet();
-//         ASSERT(pointerSectors[i] >= 0);
-//     }
+bool SingleIndirectPointer::Allocate(PersistentBitmap *freeMap, int numSectors) {
+    ASSERT(numSectors <= LEVEL_1_SECTOR_NUM);  // because directPointer must  only have 1
+    numPointer = numSectors;
+    if (freeMap->NumClear() < numPointer) {
+        return false;  // not enough space for pointer
+    }
+    for (int i = 0; i < numPointer; i++) {
+        pointerSectors[i] = freeMap->FindAndSet();
+        ASSERT(pointerSectors[i] >= 0);
+    }
 
-//     int remainSector = numSectors;
-//     for (int i = 0; i < numPointer; i++) {
-//         ASSERT(remainSector > 0);
-//         int allocateSectors = min(remainSector, SECTOR_NUM_IN_LEVEL[0]);
-//         ASSERT(table[i].Allocate(freeMap, allocateSectors));
-//         remainSector -= allocateSectors;
-//     }
-//     ASSERT(remainSector == 0);
-//     return true;
-// }
+    int remainSector = numSectors;
+    for (int i = 0; i < numPointer; i++) {
+        ASSERT(remainSector > 0);
+        int allocateSectors = min(remainSector, SECTOR_NUM_IN_LEVEL[0]);
+        ASSERT(table[i].Allocate(freeMap, allocateSectors));
+        remainSector -= allocateSectors;
+    }
+    ASSERT(remainSector == 0);
+    return true;
+}
 
-// void SingleIndirectPointer::Deallocate(PersistentBitmap *freeMap) {
-//     for (int i = 0; i < numPointer; i++) {
-//         table[i].Deallocate(freeMap);
-//     }
-// }
+void SingleIndirectPointer::Deallocate(PersistentBitmap *freeMap) {
+    for (int i = 0; i < numPointer; i++) {
+        table[i].Deallocate(freeMap);
+    }
+}
 
-// void SingleIndirectPointer::FetchFrom(int sectorNumber) {
-//     int cacheArraySize = SectorSize / sizeof(int);
-//     int cache[cacheArraySize];
-//     memset(cache, -1, sizeof(cache));
-//     kernel->synchDisk->ReadSector(sectorNumber, (char *)cache);
-//     dataSector = cache[0];
-// }
+void SingleIndirectPointer::FetchFrom(int sectorNumber) {
+    int cacheArraySize = SectorSize / sizeof(int);
+    int cache[cacheArraySize];
+    memset(cache, -1, sizeof(cache));
+    kernel->synchDisk->ReadSector(sectorNumber, (char *)cache);
+    numPointer = cache[0];
+    for(int i = 0; i < NUM_INDIRECT_POINTER; i++) {
+        pointerSectors[i] = cache[1 + i];
+    }
+    for(int i = 0; i < numPointer; i++) {
+        ASSERT(pointerSectors[i] >= 0);
+        table[i].FetchFrom(pointerSectors[i]);
+    }
+}
 
-// void SingleIndirectPointer::WriteBack(int sectorNumber) {
-//     int cacheArraySize = SectorSize / sizeof(int);
-//     int cache[cacheArraySize];
-//     memset(cache, -1, sizeof(cache));
-//     cache[0] = dataSector;
-//     kernel->synchDisk->WriteSector(sectorNumber, (char *)cache);
-// }
+void SingleIndirectPointer::WriteBack(int sectorNumber) {
+    int cacheArraySize = SectorSize / sizeof(int);
+    int cache[cacheArraySize];
+    memset(cache, -1, sizeof(cache));
+    cache[0] = numPointer;
+    for(int i = 0; i < NUM_INDIRECT_POINTER; i++) {
+        cache[1 + i] = pointerSectors[i];
+    }
+    for(int i = 0; i < numPointer; i++) {
+        ASSERT(pointerSectors[i] >= 0);
+        table[i].WriteBack(pointerSectors[i]);
+    }
+    kernel->synchDisk->WriteSector(sectorNumber, (char *)cache);
+}
 
-// int SingleIndirectPointer::ByteToSector(int offset) {
-//     ASSERT(offset <= SectorSize);
-//     return dataSector;  // because for direct pointer, only have one dataSector
-// }
+int SingleIndirectPointer::ByteToSector(int offset) {
+    int pointerIndex = divRoundDown(offset, SIZE_IN_LEVEL[0]);
+    int newOffset = offset % SIZE_IN_LEVEL[0];
+    ASSERT(pointerIndex < NUM_INDIRECT_POINTER);
+    ASSERT(pointerSectors[pointerIndex] >= 0);
+    return table[pointerIndex].ByteToSector(newOffset);
+}
 
 //----------------------------------------------------------------------
 // FileHeader::~FileHeader
@@ -189,7 +206,7 @@ bool FileHeader::Allocate(PersistentBitmap *freeMap, int fileSize) {
                 table[i] = new DirectPointer();
                 break;
             case LEVEL_2:
-                // not implement
+                table[i] = new SingleIndirectPointer();
                 break;
             case LEVEL_3:
                 // not implement
@@ -269,7 +286,7 @@ void FileHeader::FetchFrom(int sector) {
                 table[i] = new DirectPointer();
                 break;
             case LEVEL_2:
-                // not implement
+                table[i] = new SingleIndirectPointer();
                 break;
             case LEVEL_3:
                 // not implement
@@ -322,8 +339,8 @@ void FileHeader::WriteBack(int sector) {
 //----------------------------------------------------------------------
 
 int FileHeader::ByteToSector(int offset) {
-    int pointerIndex = divRoundUp(offset, SECTOR_NUM_IN_LEVEL[level - 1] * SectorSize);
-    int newOffset = offset % SECTOR_NUM_IN_LEVEL[level - 1] * SectorSize;
+    int pointerIndex = divRoundDown(offset, SIZE_IN_LEVEL[level - 1]);
+    int newOffset = offset % SIZE_IN_LEVEL[level - 1];
     ASSERT(pointerIndex < NUM_FILE_HEADER_POINTER);
     ASSERT(table[pointerIndex] != nullptr);
     return table[pointerIndex]->ByteToSector(newOffset);

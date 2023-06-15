@@ -37,6 +37,7 @@
 #define LEVEL_4 4
 
 const int SECTOR_NUM_IN_LEVEL[5] = {1, LEVEL_1_SECTOR_NUM, LEVEL_2_SECTOR_NUM, LEVEL_3_SECTOR_NUM, LEVEL_4_SECTOR_NUM};
+const int SIZE_IN_LEVEL[5] = {SectorSize, LEVEL_1_SIZE, LEVEL_2_SIZE, LEVEL_3_SIZE, LEVEL_4_SIZE};
 
 // The following class defines the Nachos "file header" (in UNIX terms,
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -90,19 +91,6 @@ class SingleIndirectPointer : public DataPointerInterface {
     int pointerSectors[NUM_INDIRECT_POINTER];
     DirectPointer table[NUM_INDIRECT_POINTER];
 };
-
-// class SingleIndirectPointer {
-//    public:
-//     bool Allocate(PersistentBitmap *bitMap, int numSectors);
-//     void Deallocate(PersistentBitmap *bitMap);
-//     void FetchFrom(int sectorNumber);
-//     void WriteBack(int sectorNumber);
-//     int GetSectorByIndex(int sectorIndex);
-
-//    private:
-//     int numSectors;  // Number of data sectors;
-//     int dataSectors[NUM_INDIRECT_POINTER];
-// };
 
 class FileHeader {
    public:
