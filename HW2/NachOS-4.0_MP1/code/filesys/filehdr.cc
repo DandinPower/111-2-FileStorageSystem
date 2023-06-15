@@ -33,6 +33,26 @@ DataPointerInterface::~DataPointerInterface() {
     // not necessary to do anything
 }
 
+DataPointerInterface* GetNewPointerByLevel(int level) {
+    switch (level) {
+        case LEVEL_1:
+            return new DirectPointer();
+            break;
+        case LEVEL_2:
+            return new SingleIndirectPointer();
+            break;
+        case LEVEL_3:
+            return new DoubleIndirectPointer();
+            break;
+        case LEVEL_4:
+            return nullptr; // not implement
+            break;
+        default:
+            return nullptr; // impossible case
+            break;
+    }
+}
+
 DirectPointer::~DirectPointer() {
     // not necessary to do anything
 }
@@ -143,6 +163,76 @@ int SingleIndirectPointer::ByteToSector(int offset) {
     return table[pointerIndex].ByteToSector(newOffset);
 }
 
+DoubleIndirectPointer::~DoubleIndirectPointer() {
+    // not necessary to do anything
+}
+
+bool DoubleIndirectPointer::Allocate(PersistentBitmap *freeMap, int numSectors) {
+    ASSERT(numSectors <= LEVEL_2_SECTOR_NUM);  // because directPointer must  only have 1
+    numPointer = numSectors;
+    if (freeMap->NumClear() < numPointer) {
+        return false;  // not enough space for pointer
+    }
+    for (int i = 0; i < numPointer; i++) {
+        pointerSectors[i] = freeMap->FindAndSet();
+        ASSERT(pointerSectors[i] >= 0);
+    }
+
+    int remainSector = numSectors;
+    for (int i = 0; i < numPointer; i++) {
+        ASSERT(remainSector > 0);
+        int allocateSectors = min(remainSector, SECTOR_NUM_IN_LEVEL[1]);
+        ASSERT(table[i].Allocate(freeMap, allocateSectors));
+        remainSector -= allocateSectors;
+    }
+    ASSERT(remainSector == 0);
+    return true;
+}
+
+void DoubleIndirectPointer::Deallocate(PersistentBitmap *freeMap) {
+    for (int i = 0; i < numPointer; i++) {
+        table[i].Deallocate(freeMap);
+    }
+}
+
+void DoubleIndirectPointer::FetchFrom(int sectorNumber) {
+    int cacheArraySize = SectorSize / sizeof(int);
+    int cache[cacheArraySize];
+    memset(cache, -1, sizeof(cache));
+    kernel->synchDisk->ReadSector(sectorNumber, (char *)cache);
+    numPointer = cache[0];
+    for(int i = 0; i < NUM_INDIRECT_POINTER; i++) {
+        pointerSectors[i] = cache[1 + i];
+    }
+    for(int i = 0; i < numPointer; i++) {
+        ASSERT(pointerSectors[i] >= 0);
+        table[i].FetchFrom(pointerSectors[i]);
+    }
+}
+
+void DoubleIndirectPointer::WriteBack(int sectorNumber) {
+    int cacheArraySize = SectorSize / sizeof(int);
+    int cache[cacheArraySize];
+    memset(cache, -1, sizeof(cache));
+    cache[0] = numPointer;
+    for(int i = 0; i < NUM_INDIRECT_POINTER; i++) {
+        cache[1 + i] = pointerSectors[i];
+    }
+    for(int i = 0; i < numPointer; i++) {
+        ASSERT(pointerSectors[i] >= 0);
+        table[i].WriteBack(pointerSectors[i]);
+    }
+    kernel->synchDisk->WriteSector(sectorNumber, (char *)cache);
+}
+
+int DoubleIndirectPointer::ByteToSector(int offset) {
+    int pointerIndex = divRoundDown(offset, SIZE_IN_LEVEL[1]);
+    int newOffset = offset % SIZE_IN_LEVEL[1];
+    ASSERT(pointerIndex < NUM_INDIRECT_POINTER);
+    ASSERT(pointerSectors[pointerIndex] >= 0);
+    return table[pointerIndex].ByteToSector(newOffset);
+}
+
 //----------------------------------------------------------------------
 // FileHeader::~FileHeader
 // 	delete the singleIndirectpointer table if it allocated
@@ -201,23 +291,9 @@ bool FileHeader::Allocate(PersistentBitmap *freeMap, int fileSize) {
 
     for (int i = 0; i < numPointer; i++) {
         if (table[i] != nullptr) delete table[i];
-        switch (level) {
-            case LEVEL_1:
-                table[i] = new DirectPointer();
-                break;
-            case LEVEL_2:
-                table[i] = new SingleIndirectPointer();
-                break;
-            case LEVEL_3:
-                // not implement
-                break;
-            case LEVEL_4:
-                // not implement
-                break;
-            default:
-                // impossible case
-                break;
-        }
+        table[i] = GetNewPointerByLevel(level);
+        ASSERT(table[i] != nullptr);
+
         // let each pointer to allocate their space
         ASSERT(remainSector > 0);
         int allocateSectors = min(remainSector, SECTOR_NUM_IN_LEVEL[level - 1]);
@@ -281,23 +357,8 @@ void FileHeader::FetchFrom(int sector) {
 
     for (int i = 0; i < numPointer; i++) {
         if (table[i] != nullptr) delete table[i];
-        switch (level) {
-            case LEVEL_1:
-                table[i] = new DirectPointer();
-                break;
-            case LEVEL_2:
-                table[i] = new SingleIndirectPointer();
-                break;
-            case LEVEL_3:
-                // not implement
-                break;
-            case LEVEL_4:
-                // not implement
-                break;
-            default:
-                // inpossible case
-                break;
-        }
+        table[i] = GetNewPointerByLevel(level);
+        ASSERT(table[i] != nullptr);
         ASSERT(pointerSectors[i] >= 0);
         table[i]->FetchFrom(pointerSectors[i]);
     }

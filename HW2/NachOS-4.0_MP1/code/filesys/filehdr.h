@@ -64,6 +64,8 @@ class DataPointerInterface {
     virtual int ByteToSector(int offset) = 0;
 };
 
+DataPointerInterface* GetNewPointerByLevel(int level);
+
 class DirectPointer : public DataPointerInterface {
    public:
     ~DirectPointer() override;
@@ -90,6 +92,21 @@ class SingleIndirectPointer : public DataPointerInterface {
     int numPointer;  // Number of pointer in the file
     int pointerSectors[NUM_INDIRECT_POINTER];
     DirectPointer table[NUM_INDIRECT_POINTER];
+};
+
+class DoubleIndirectPointer : public DataPointerInterface {
+   public:
+    ~DoubleIndirectPointer() override;
+    bool Allocate(PersistentBitmap *bitMap, int numSectors) override;
+    void Deallocate(PersistentBitmap *bitMap) override;
+    void FetchFrom(int sectorNumber) override;
+    void WriteBack(int sectorNumber) override;
+    int ByteToSector(int offset) override;
+
+   private:
+    int numPointer;  // Number of pointer in the file
+    int pointerSectors[NUM_INDIRECT_POINTER];
+    SingleIndirectPointer table[NUM_INDIRECT_POINTER];
 };
 
 class FileHeader {
