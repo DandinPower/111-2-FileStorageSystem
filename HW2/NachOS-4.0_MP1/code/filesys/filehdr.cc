@@ -73,6 +73,59 @@ int DirectPointer::ByteToSector(int offset) {
     return dataSector;  // because for direct pointer, only have one dataSector
 }
 
+// SingleIndirectPointer::~SingleIndirectPointer() {
+//     // not necessary to do anything
+// }
+
+// bool SingleIndirectPointer::Allocate(PersistentBitmap *freeMap, int numSectors) {
+//     ASSERT(numSectors <= LEVEL_1_SECTOR_NUM);  // because directPointer must  only have 1
+//     numPointer = numSectors;
+//     if (freeMap->NumClear() < numPointer) {
+//         return false;  // not enough space for pointer
+//     }
+//     for (int i = 0; i < numPointer; i++) {
+//         pointerSectors[i] = freeMap->FindAndSet();
+//         ASSERT(pointerSectors[i] >= 0);
+//     }
+
+//     int remainSector = numSectors;
+//     for (int i = 0; i < numPointer; i++) {
+//         ASSERT(remainSector > 0);
+//         int allocateSectors = min(remainSector, SECTOR_NUM_IN_LEVEL[0]);
+//         ASSERT(table[i].Allocate(freeMap, allocateSectors));
+//         remainSector -= allocateSectors;
+//     }
+//     ASSERT(remainSector == 0);
+//     return true;
+// }
+
+// void SingleIndirectPointer::Deallocate(PersistentBitmap *freeMap) {
+//     for (int i = 0; i < numPointer; i++) {
+//         table[i].Deallocate(freeMap);
+//     }
+// }
+
+// void SingleIndirectPointer::FetchFrom(int sectorNumber) {
+//     int cacheArraySize = SectorSize / sizeof(int);
+//     int cache[cacheArraySize];
+//     memset(cache, -1, sizeof(cache));
+//     kernel->synchDisk->ReadSector(sectorNumber, (char *)cache);
+//     dataSector = cache[0];
+// }
+
+// void SingleIndirectPointer::WriteBack(int sectorNumber) {
+//     int cacheArraySize = SectorSize / sizeof(int);
+//     int cache[cacheArraySize];
+//     memset(cache, -1, sizeof(cache));
+//     cache[0] = dataSector;
+//     kernel->synchDisk->WriteSector(sectorNumber, (char *)cache);
+// }
+
+// int SingleIndirectPointer::ByteToSector(int offset) {
+//     ASSERT(offset <= SectorSize);
+//     return dataSector;  // because for direct pointer, only have one dataSector
+// }
+
 //----------------------------------------------------------------------
 // FileHeader::~FileHeader
 // 	delete the singleIndirectpointer table if it allocated
@@ -171,6 +224,9 @@ void FileHeader::Deallocate(PersistentBitmap *freeMap) {
             table[i]->Deallocate(freeMap);
             delete table[i];
             table[i] = nullptr;
+
+            ASSERT(freeMap->Test((int)pointerSectors[i]));  // ought to be marked!
+            freeMap->Clear((int)pointerSectors[i]);
         }
     }
 }

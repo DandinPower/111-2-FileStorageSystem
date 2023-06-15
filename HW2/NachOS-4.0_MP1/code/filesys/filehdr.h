@@ -76,6 +76,21 @@ class DirectPointer : public DataPointerInterface {
     int dataSector;
 };
 
+class SingleIndirectPointer : public DataPointerInterface {
+   public:
+    ~SingleIndirectPointer() override;
+    bool Allocate(PersistentBitmap *bitMap, int numSectors) override;
+    void Deallocate(PersistentBitmap *bitMap) override;
+    void FetchFrom(int sectorNumber) override;
+    void WriteBack(int sectorNumber) override;
+    int ByteToSector(int offset) override;
+
+   private:
+    int numPointer;  // Number of pointer in the file
+    int pointerSectors[NUM_INDIRECT_POINTER];
+    DirectPointer table[NUM_INDIRECT_POINTER];
+};
+
 // class SingleIndirectPointer {
 //    public:
 //     bool Allocate(PersistentBitmap *bitMap, int numSectors);
@@ -96,8 +111,6 @@ class FileHeader {
     bool Allocate(PersistentBitmap *bitMap, int fileSize);  // Initialize a file header,
                                                             //  including allocating space
                                                             //  on disk for the file data
-
-    bool AllocateIndirect(PersistentBitmap *bitMap, int needNumSectors);  // allocating space to indirectPointer
 
     void Deallocate(PersistentBitmap *bitMap);  // De-allocate this file's
                                                 //  data blocks
