@@ -149,10 +149,12 @@ static void CreateDirectory(char *path) {
     memset(filename, 0, sizeof(char) * FileNameMaxLen);
     if (kernel->fileSystem->ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
         // create dir on the based on current dir
-        if (kernel->fileSystem->CreateDirectory(filename))
-            std::cout << "create dir: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
-        else
-            std::cout << "create dir: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+        if (kernel->fileSystem->CreateDirectory(filename)) {
+            // std::cout << "create dir: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
+        }
+        else {
+            // std::cout << "create dir: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+        }
     }
     kernel->fileSystem->ResetToRootDirectory();
 }

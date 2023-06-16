@@ -162,7 +162,7 @@ bool FileSystem::ChangeCurrentDirectory(char *name) {
     currentDirectory->FetchFrom(currentDirectoryFile);
     int dirSector = currentDirectory->Find(name);
     if (dirSector == -1) {
-        std::cout << "Dir " << name << "Not found" << std::endl;
+        // std::cout << "Dir " << name << "Not found" << std::endl;
         return false;
     } else {
         currentDirectory->WriteBack(currentDirectoryFile);
@@ -180,7 +180,7 @@ bool FileSystem::ChangeCurrentDirectoryByWholePath(char *path, char *currentPath
     memset(currentPath, 0, sizeof(char) * PATH_MAX_LEN);
     memset(filename, 0, sizeof(char) * FileNameMaxLen);
     if (path[0] != '/') {
-        std::cout << "path didn't start with '/'" << std::endl;
+        // std::cout << "path didn't start with '/'" << std::endl;
         return false;
     } else {
         char splitPath[PATH_MAX_LEN];
@@ -202,7 +202,7 @@ bool FileSystem::ChangeCurrentDirectoryByWholePath(char *path, char *currentPath
         // traverse dir if not found, cout error
         for (int i = 0; i < pathLength - 1; i++) {
             if (!ChangeCurrentDirectory(pathArr[i])) {
-                std::cout << "didn't found dir: " << pathArr[i] << " in dir: " << currentParsePath << std::endl;
+                // std::cout << "didn't found dir: " << pathArr[i] << " in dir: " << currentParsePath << std::endl;
                 return false;
             }
             strcat(currentParsePath, pathArr[i]);
@@ -226,7 +226,7 @@ void FileSystem::ResetToRootDirectory() {
 }
 
 bool FileSystem::CreateDirectory(char *name) {
-    std::cout << "Creating directory " << name << " by filesystem" << std::endl;
+    // std::cout << "Creating directory " << name << " by filesystem" << std::endl;
     PersistentBitmap *freeMap;
     FileHeader *hdr;
     int sector;
@@ -234,21 +234,21 @@ bool FileSystem::CreateDirectory(char *name) {
     currentDirectory->FetchFrom(currentDirectoryFile);
     if (currentDirectory->Find(name) != -1) {
         success = FALSE;  // dir is already in directory
-        std::cout << "dir \"" << name << "\" is already in directory" << std::endl;
+        // std::cout << "dir \"" << name << "\" is already in directory" << std::endl;
     } else {
         freeMap = new PersistentBitmap(freeMapFile, NumSectors);
         sector = freeMap->FindAndSet();  // find a sector to hold the file header
         if (sector == -1) {
             success = FALSE;  // no free block for file header
-            std::cout << "no free block for file header" << std::endl;
+            // std::cout << "no free block for file header" << std::endl;
         } else if (!currentDirectory->Add(name, sector, DIR_TYPE)) {
             success = FALSE;
-            std::cout << "no space in directory" << std::endl;
+            // std::cout << "no space in directory" << std::endl;
         } else {
             hdr = new FileHeader;
             if (!hdr->Allocate(freeMap, DIR_SIZE)) {
                 success = FALSE;  // no space on disk for data
-                std::cout << "no space on disk for data" << std::endl;
+                // std::cout << "no space on disk for data" << std::endl;
             } else {
                 success = TRUE;
                 // everthing worked, flush all changes back to disk
@@ -307,17 +307,18 @@ bool FileSystem::Create(char *path, int initialSize) {
     if (ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
         // create dir on the based on current dir
         if (CreateFile(filename, initialSize)) {
-            std::cout << "create file: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
+            // std::cout << "create file: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
             success = true;
-        } else
-            std::cout << "create file: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+        } else {
+            // std::cout << "create file: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+        }
     }
     ResetToRootDirectory();
     return success;
 }
 
 bool FileSystem::CreateFile(char *name, int initialSize) {
-    std::cout << "Creating file " << name << " by filesystem" << std::endl;
+    // std::cout << "Creating file " << name << " by filesystem" << std::endl;
     PersistentBitmap *freeMap;
     FileHeader *hdr;
     int sector;
@@ -325,21 +326,21 @@ bool FileSystem::CreateFile(char *name, int initialSize) {
     currentDirectory->FetchFrom(currentDirectoryFile);
     if (currentDirectory->Find(name) != -1) {
         success = FALSE;  // dir is already in directory
-        std::cout << "file \"" << name << "\" is already in directory" << std::endl;
+        // std::cout << "file \"" << name << "\" is already in directory" << std::endl;
     } else {
         freeMap = new PersistentBitmap(freeMapFile, NumSectors);
         sector = freeMap->FindAndSet();  // find a sector to hold the file header
         if (sector == -1) {
             success = FALSE;  // no free block for file header
-            std::cout << "no free block for file header" << std::endl;
+            // std::cout << "no free block for file header" << std::endl;
         } else if (!currentDirectory->Add(name, sector, FILE_TYPE)) {
             success = FALSE;
-            std::cout << "no space in directory" << std::endl;
+            // std::cout << "no space in directory" << std::endl;
         } else {
             hdr = new FileHeader;
             if (!hdr->Allocate(freeMap, initialSize)) {
                 success = FALSE;  // no space on disk for data
-                std::cout << "no space on disk for data" << std::endl;
+                // std::cout << "no space on disk for data" << std::endl;
             } else {
                 success = TRUE;
                 // everthing worked, flush all changes back to disk
@@ -378,9 +379,10 @@ FileSystem::Open(char *path) {
         sector = currentDirectory->Find(filename);
         if (sector >= 0) {
             openFile = new OpenFile(sector);  // name was found in directory
-            std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
-        } else
-            std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+            // std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
+        } else {
+            // std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+        }
     }
     ResetToRootDirectory();
     return openFile;
@@ -401,9 +403,10 @@ FileSystem::OpenAFile(char *path) {
         if (sector >= 0) {
             openFile = new OpenFile(sector);  // name was found in directory
             table.insert({sector, openFile});
-            std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
-        } else
-            std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+            // std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" success!" << std::endl;
+        } else {
+            // std::cout << "open file: " << filename << " on dir \"" << currentPath << "\" fail!" << std::endl;
+        }
     }
     ResetToRootDirectory();
     return sector;
@@ -452,7 +455,7 @@ bool FileSystem::Remove(char *path) {
     memset(filename, 0, sizeof(char) * FileNameMaxLen);
     if (ChangeCurrentDirectoryByWholePath(path, currentPath, filename)) {
         if (strcmp(filename, "")==0) {
-            cout << "Can't remove root dir" << endl;
+            // cout << "Can't remove root dir" << endl;
             return FALSE;
         }
         sector = currentDirectory->Find(filename);
