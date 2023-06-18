@@ -478,7 +478,7 @@ bool FileSystem::RemoveDir(int sector, char *dirName) {
     OpenFile *removeDirFile = new OpenFile(sector);
     Directory *removeDir = new Directory(NumDirEntries);
     removeDir->FetchFrom(removeDirFile);
-    removeDir->RemoveRecursive(freeMap);
+    ASSERT(removeDir->RemoveRecursive(freeMap));
     removeDir->WriteBack(removeDirFile);
     delete removeDirFile;
     delete removeDir;
@@ -502,7 +502,7 @@ bool FileSystem::RemoveFile(int sector, char *fileName) {
     freeMap = new PersistentBitmap(freeMapFile, NumSectors);
     fileHdr->Deallocate(freeMap);  // remove data blocks
     freeMap->Clear(sector);        // remove header block
-    currentDirectory->Remove(fileName);
+    ASSERT(currentDirectory->Remove(fileName));
     freeMap->WriteBack(freeMapFile);                    // flush to disk
     currentDirectory->WriteBack(currentDirectoryFile);  // flush to disk
     delete fileHdr;

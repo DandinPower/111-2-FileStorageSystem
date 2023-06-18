@@ -148,7 +148,7 @@ bool Directory::Add(char *name, int newSector, int type) {
     for (int i = 0; i < tableSize; i++)
         if (!table[i].inUse) {
             table[i].inUse = TRUE;
-            strncpy(table[i].name, name, FileNameMaxLen);
+            strncpy(table[i].name, name, FileNameMaxLen + 1);
             table[i].sector = newSector;
             table[i].fileType = type;
             return TRUE;
@@ -214,11 +214,13 @@ bool Directory::RemoveRecursive(PersistentBitmap *freeMap) {
 //----------------------------------------------------------------------
 
 void Directory::List() {
+    int index = 0;
     for (int i = 0; i < tableSize; i++)
         if (table[i].inUse) {
             char c = 'F';
             if (table[i].fileType == DIR_TYPE) c = 'D';
-            printf("[%d] %s %c\n", i, table[i].name, c);
+            printf("[%d] %s %c\n", index, table[i].name, c);
+            index += 1;
         }
 }
 
@@ -231,22 +233,24 @@ void Directory::ListRecursive(int offset) {
     char offsetStr[200];
     memset(offsetStr, ' ', offset);
     offsetStr[offset] = '\0';
-
+    int index = 0;
     for (int i = 0; i < tableSize; i++)
         if (table[i].inUse) {
             char c = 'F';
             if (table[i].fileType == DIR_TYPE) {
                 c = 'D';
-                printf("%s[%d] %s %c\n", offsetStr, i, table[i].name, c);
+                printf("%s[%d] %s %c\n", offsetStr, index, table[i].name, c);
                 int subSector = table[i].sector;
                 OpenFile *subDirFile = new OpenFile(subSector);
                 Directory *subDir = new Directory(NumDirEntries);
                 subDir->FetchFrom(subDirFile);
                 subDir->ListRecursive(offset + 3);
                 delete subDir;
+                delete subDirFile;
             } else {
-                printf("%s[%d] %s %c\n", offsetStr, i, table[i].name, c);
+                printf("%s[%d] %s %c\n", offsetStr, index, table[i].name, c);
             }
+            index += 1;
         }
 }
 
